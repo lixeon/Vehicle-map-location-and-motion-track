@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+
+<!-- query bsf_sysconfig -->
+<bean id="sql_common_querySysConfig" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                    T_BSF_SYSCONFIG
+               where 1=1
+             <[ and CATEGORY = :category ]>
+             <[ and CONFIG_ID = :config_id ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- update bsf_sysconfig -->
+<bean id="sql_common_updateSysConfig" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update
+                   T_BSF_SYSCONFIG
+                set
+                   VALUE = :value,
+                   UPDATE_TIME = :update_time
+                where
+                   CONFIG_ID = :config_id
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- query all code data -->
+<bean id="sql_common_codedata_queryAll" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                    T_BSF_CODEDATA
+                order by
+                    CODE_ID,
+                    SORT_NO
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- query organization list -->
+<bean id="sql_common_queryOrgList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                	ORG_ID AS ID,
+                    ORG_ID,
+                    ORG_NAME,
+                    ORG_NAME AS TEXT
+                from
+                    T_BSF_ORG
+                where
+                    PARENT_ORG_ID =:parentOrgId
+             <[ and ORG_ID = :orgId ]>
+                order by
+                    ORG_ID
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- query province and city data -->
+<bean id="sql_common_queryProvinceAndCity" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    A.CITY_ID,
+                    A.PROVINCE_ID,
+                    A.CITY_CODE,
+                    A.CITY_NAME,
+                    B.PROVINCE_NAME
+                from
+                    T_BSF_CITY A,
+                    T_BSF_PROVINCE B
+                where
+                    A.PROVINCE_ID = B.PROVINCE_ID
+                order by
+                    A.CITY_ID
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- query menus -->
+<bean id="sql_common_codedata_queryMenus" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    A.MENU_ID AS ID,
+                    A.MENU_ID,
+                    A.PARENT_ID,
+                    A.NAME AS TEXT,
+                    A.URL,
+                    A.ICON,
+                    A.SORT_NO,
+                    A.LEAF
+                from
+                    T_BSF_MENU A,
+                    T_BSF_ROLE_MENU_RL B
+                where
+                    A.MENU_ID = B.MENU_ID
+                and B.ROLE_ID = :roleId
+                and A.PARENT_ID = :parentId
+                order by
+                    A.SORT_NO
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- query all sequence object -->
+<bean id="sql_common_sequence_queryAll" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select * from T_BSF_SEQ
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- update sequence object -->
+<bean id="sql_common_sequence_update" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update T_BSF_SEQ set CURRENT=:current where SEQ_ID=:id_key
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+</beans>

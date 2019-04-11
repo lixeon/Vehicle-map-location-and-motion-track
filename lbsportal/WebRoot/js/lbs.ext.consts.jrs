@@ -1,0 +1,86 @@
+
+// default page size
+lbs.C.PAGE_SIZE = 15;
+
+// top group
+lbs.C.TOP_GROUP = "0000";
+
+// roles
+lbs.C.ROLE = {
+    SA : 1,
+    CP : 50,
+    GP : 55,
+    PU : 100
+};
+
+// terminal configuration status
+lbs.C.CONFIG_STATUS = {
+    "0" : "&nbsp;<img src='images/icons/refresh.png' alt='同步中' />同步中",
+    "1" : "&nbsp;<img src='images/icons/ok.png' alt='已同步' />已同步",
+    "9" : "&nbsp;<img src='images/icons/update.png' alt='已修改' /><span style='color:red'>修改</span>",
+    "DONE" : "1",
+    "SYNC" : "0"
+};
+
+// code constant key
+lbs.C.userType = {
+    P : "1",
+    G : "2"
+};
+
+// on-off line
+lbs.C.ONOFF_STATUS = {
+    "": "无",
+    "0": "" + "<img src='images/icons/offline.png' />&nbsp;" + "离线",
+    "1": "" + "<img src='images/icons/online.png' />&nbsp;" + "在线"
+};
+
+
+// terminal status
+lbs.C.TMN_STATUS = {
+    "": "无",
+    "1": "设防",
+    "2": "撤防",
+    "255": "断电",
+    "511": "断电休眠",
+    "900": "离线",
+    "NODATA": "无数据",
+    PT: "1",
+    UNPT: "2",
+    EMPTY: "NODATA"
+};
+
+// locate result
+lbs.C.LOC_RESULT = {
+    "": "无",
+    "0": "失败",
+    "1": "成功",
+    "2": "上次结果",
+    "3": "小区定位",
+    "NODATA": "无数据"
+};
+
+// notify status
+lbs.C.NOTIFY_STATUS = {
+    "": "无",
+    "00": "未提醒",
+    "0": "短信失败",
+    "1": "短信成功",
+    "2": "人工处理",
+    "NODATA": "无数据",
+    "UNNOTIFY": "00",
+    "SMS_F": "0",
+    "SMS_S": "1",
+    "MANUAL": "2"
+};
+
+lbs.C.ALARM_TYPE = {
+    "ALARM_SHOCK": "异常震动",
+    "ALARM_OOB": "越界",
+    "ALARM_LOWBTT": "低电量",
+    "ALARM_MEOFF": "主电源断开",
+    "ALARM_LOGINF": "登录失败"
+};
+
+
+

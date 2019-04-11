@@ -1,0 +1,158 @@
+#panel_header {
+}
+
+.my-navbar-inner {
+	padding: 0px;
+	font-size: 12px;
+}
+
+#my-header-info {
+	height: 24px;
+	padding: 5px 8px;
+}
+
+#my-menus-panel {
+	padding: 0px 5px 5px 5px;
+}
+
+#my-menus-panel .btn {
+	padding: 4px 8px;
+}
+
+#my-menus-panel .btn span {
+	font-size: 12px;
+}
+
+#console {
+}
+
+#panel_history_query {
+	position: absolute;
+	margin-left: 200px;
+	margin-top: 3px;
+	padding: 8px;
+	overflow: hidden;
+	z-index: 9999999;
+	font-size: 12px;
+/*	
+	background-color: #000000;
+	filter:alpha(opacity=65);
+    opacity:0.65;
+    color: #ffffff;
+*/
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+          border-radius: 3px; 
+}
+
+#select_time_data_area div {
+    position: absolute;
+    background-color: red;
+    height: 10px;
+}
+
+
+#panel_terminal_info {
+	position: absolute;
+	margin: 3px;
+	padding: 8px;
+	width: 180px;
+	height: 20px;
+	overflow: hidden;
+	z-index: 101;
+	font-size: 12px;
+/*	
+	background-color: #000000;
+	filter:alpha(opacity=65);
+    opacity:0.65;
+    color: #ffffff;
+*/
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+          border-radius: 3px; 
+}
+
+
+#panel_map_legend {
+	position: absolute;
+    padding: 1px 3px;
+	margin-top: 55px;
+	margin-left: 80px;
+	overflow: hidden;
+	font-size: 12px;
+	z-index: 101;
+	background-color: white;
+}
+
+.speed-tag { display: block; }
+.speed-tag .low { position: relative; padding: 0px 12px; background-color: #007500; font-size: 6px; }
+.speed-tag .mid { position: relative; padding: 0px 12px; background-color: #0000E3; font-size: 6px; }
+.speed-tag .high { position: relative; padding: 0px 12px; background-color: #600000; font-size: 6px; }
+
+
+#panel_modify_pwd {
+}
+
+#panel_modify_pwd div span {
+    padding: 1px 10px;
+}
+
+#panel_modify_pwd div input {
+    width: 160px;
+}
+
+#panel_modify_name {
+}
+
+#panel_modify_name div span {
+    padding: 1px 10px;
+}
+
+#panel_modify_name div input {
+    width: 160px;
+}
+
+.sph {
+    padding: 0px 5px;
+    background-color: #f2f2f2;
+    border: 1px solid #000;
+}
+
+.spv {
+    position: relative;
+    padding: 0px 15px 0px 5px;
+    margin: 0px 4px 0px -1px;
+    background-color: #f9f9f9;
+    border: 1px solid #000;
+}
+
+.sp-fix-width {
+    position: relative; 
+    width: 60px;
+}
+
+.tbl-info {
+    width: 100%;
+    /* text-align: center; */
+}
+
+.tbl-info th {
+    font-weight: normal;
+    text-align: right;
+    padding-right: 3px;
+    width: 35px;
+}
+
+.tbl-info td {
+    padding-left: 4px;
+    width: 75px;
+}
+
+
+
+
+
+
+
+
+

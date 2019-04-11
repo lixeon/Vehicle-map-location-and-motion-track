@@ -1,0 +1,115 @@
+/**
+ * µÇÂ¼Ò³Ãæcss
+ */
+body {
+	padding:0;
+	margin:0;
+	background-color: #eee;
+	background-image: url(../images/bg.jpg);
+}
+.container {
+	margin-right: auto;
+	margin-left: auto;
+}
+.btn {
+	display: inline-block;
+	margin-bottom: 0;
+	font-weight: normal;
+	text-align: center;
+	vertical-align: middle;
+	cursor: pointer;
+	background-image: none;
+	border: 1px solid transparent;
+	white-space: nowrap;
+	padding: 6px 12px;
+	margin-left:38px;
+	font-size: 14px;
+	line-height: 1.428571429;
+	border-radius: 4px;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-o-user-select: none;
+	user-select: none;
+}
+.btn-block {
+	display: block;
+	width: 100%;
+	padding-left: 0;
+	padding-right: 0;
+}
+.btn-lg {
+	padding: 10px 16px;
+	font-size: 18px;
+	line-height: 1.33;
+	border-radius: 6px;
+}
+.btn-primary {
+	color: #ffffff;
+	background-color: #428bca;
+	border-color: #357ebd;
+}
+.form-signin {
+	margin-right:0px;
+	margin-left:550px;
+	width: 330px;
+	padding: 15px;
+}
+.form-signin .form-signin-heading {
+	text-align:center;
+	margin-bottom: 10px;
+	color:#ffffff;
+	font-family:"Î¢ÈíÑÅºÚ";
+}
+.form-group {
+	margin:10px;
+}
+.form-signin .form-control {
+	position: relative;
+	font-size: 16px;
+	height: 20px;
+	padding: 10px;
+	width:250px;
+}
+.form-control {
+	display: block;
+	width: 90%;
+	height: 12px;
+	padding: 20px 12px;
+	margin-left:38px;
+	font-size: 14px;
+	line-height: 1.428571429;
+	color: #555555;
+	background-color: #ffffff;
+	background-image: none;
+	border: 1px solid #cccccc;
+	border-radius: 4px;
+	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+	
+	/*
+	-webkit-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+	transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+	*/
+}
+.form-signin .form-control:focus {
+	z-index: 2;
+}
+.loginregion {
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:100px;	
+	background-image: url(../images/login_bg3.jpg);
+	height: 360px;
+	width: 917px;
+}
+.copyright
+{
+	position:absolute;
+	bottom:30px;
+	width:100%;
+    text-align: center;
+	vertical-align: middle;	
+	color:White;
+	font-family:"Î¢ÈíÑÅºÚ";
+}

@@ -1,0 +1,20 @@
+
+.my-navbar-inner {
+    padding: 5px;
+    font-size: 12px;
+}
+
+.my-navbar-inner div {
+}
+
+.my-navbar-inner .nav table th {
+	font-weight: normal;
+	vertical-align: baseline;
+}
+
+.my-navbar-inner .nav table select {
+	height: 25px;
+	font-size: 12px;
+	width: 140px;
+}
+

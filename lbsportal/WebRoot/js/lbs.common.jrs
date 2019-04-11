@@ -1,0 +1,193 @@
+
+// resizer
+/*
+lbs.common.resizer = function(obj) {
+	var o = obj;
+	var cbs = [];
+
+	this.addAdvice = function(cb) {
+		cbs.push(cb);
+		return this;
+	};
+
+	$(o).resize(function() {
+		for (var i = 0; i < cbs.length; i++) {
+			try {
+				cbs[i]();
+			} catch (e) {}
+		}
+	});
+};
+*/
+
+// Ajax
+lbs.common.ajax = function(url, data, callback, err_callback, mask) {
+	if (lbs.common.isTrimEmpty(data)) { data = {}; }
+	var _cb = function(text) {
+        // hide mask.
+        if (mask) { $('#ajax-loading,#ajax-overlay').hide(); }
+        
+        // Can call callback function with no exception.
+        var canCall = true;
+        if (!lbs.common.isEmpty(text)) {
+            var jsonRet = $.parseJSON(text);
+            // error level
+            var errorLevel = jsonRet.errorLevel;
+            
+            // system error
+            if (lbs.consts.ERROR_LEVEL_SYS == errorLevel) {
+                if (!lbs.common.isTrimEmpty(jsonRet.errorMsgs)) {
+                    alert(jsonRet.errorMsgs);
+                }
+                // TODO may rewrite here?
+                // top.location = 'u_gb_go.action?result=' + jsonRet.jumpTo;
+                canCall = false;
+            // business exception
+            } else if (lbs.consts.ERROR_LEVEL_BIZ == errorLevel) {
+                // error call back.
+                if (err_callback != null
+                        && err_callback != undefined
+                        && jsonRet.errCallback == '1') {
+                	err_callback.call(this, text);
+                } else {
+                	var msgs = '';
+                    for (var i = 0; i < jsonRet.errorMsgs.length; i++) {
+                        msgs += jsonRet.errorMsgs[i] + '\n';
+                    }
+                    
+                    // TODO alert is not friendly
+                	alert(msgs);
+                }
+                canCall = false;
+            }
+        }
+
+        // if there no error, just call user's callback
+        if (canCall && callback != null && callback != undefined) {
+            callback.call(this, text);
+        }
+	};
+
+    if (typeof(data) == 'string') {
+        data += '&ajaxSubmit=1';
+    } else {
+        data.ajaxSubmit = '1';
+    }
+
+    // sent to server.
+    $.post(url, data, _cb, 'text');
+    if (mask) {
+        $('#ajax-loading,#ajax-overlay').show();
+    }
+    _cb = null;
+    data = null;
+};
+
+
+/**
+ * is empty
+ */
+lbs.common.isEmpty = function(o) {
+	return (o == undefined || o == null || '' == o) ? true : false;
+};
+
+
+/**
+ * trim string
+ */
+lbs.common.trim = function(str) {
+    if (lbs.common.isEmpty(str)) { return str; }
+    if (typeof str == 'string') {
+        return str.replace(/(^\s*)|(\s*$)/g, '');
+    } else {
+        return str;
+    }
+};
+
+
+/**
+ * is trim empty
+ */
+lbs.common.isTrimEmpty = function(ts) {
+    if (ts == null || '' == ts) { return true; }
+    return lbs.common.isEmpty(lbs.common.trim(ts));
+};
+
+
+/**
+ * is empty list
+ */
+lbs.common.isEmptyList = function(list) {
+    return (!list || list == null || list == undefined || list.length == 0) ? true : false;
+};
+
+
+
+/**
+ * filter blog location
+ */
+lbs.common.filterBlogLoc = function(locs) {
+    var tPoss = locs.poss;
+    if (tPoss != null && tPoss.length > 0) {
+        var nPoss = [];
+        for (var i = 0; i < tPoss.length; i++) {
+            if (tPoss[i].loc_status == lbs.CC.LOC_STATUS.BLOG_LOC) {
+                continue;
+            }
+            nPoss.push(tPoss[i]);
+        }
+        // hold
+        locs.poss = nPoss;
+    }
+};
+
+
+lbs.common._LINE_COLORS = ["#007500", "#0000E3", "#600000"];
+lbs.common.getLineColor = function(speed) {
+    var sp = Math.floor(speed);
+    if (sp < 20) {
+        return lbs.common._LINE_COLORS[0];
+    } else if (sp < 60) {
+        return lbs.common._LINE_COLORS[1];
+    } else {
+        return lbs.common._LINE_COLORS[2];
+    }
+};
+
+
+/**
+ * Switch Map
+ * 
+ * @param mapType current map type
+ */
+lbs.common.switchMap = function(mapType) {
+	if (vp.v.engine == mapType) {
+		return;
+	}
+
+	// construct new url
+	var href = window.location.href;
+	var newUrl = href;
+	var idx = href.indexOf("?");
+	if (idx != -1) {
+		newUrl = href.substring(0, idx);
+		var newSearch = "";
+		var kvs = href.substring(idx + 1).split("&"), kv;
+		for (var i = 0; i < kvs.length; i++) {
+			kv = kvs[i].split("=");
+			if (kv[0] == 'mapType' || kv[0] == 'timestamp') {
+				continue;
+			}
+			newSearch += kvs[i] + "&";
+		}
+		newSearch += "mapType=" + mapType + "&timestamp=" + new Date().getTime();
+		newUrl += "?" + newSearch;
+	} else {
+		newUrl += "?mapType=" + mapType + "&timestamp=" + new Date().getTime();
+	}
+
+	// reload page
+	window.location.replace(newUrl);
+};
+
+

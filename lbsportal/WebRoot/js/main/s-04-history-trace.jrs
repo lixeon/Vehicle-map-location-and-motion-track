@@ -1,0 +1,508 @@
+
+(function() {
+	var _MK_PREFIX = "mk";
+    // default speed
+    var _DEFAULT_SPEED = 800;
+    var _SPEEDS = [_DEFAULT_SPEED/0.7/0.7, _DEFAULT_SPEED/0.7, _DEFAULT_SPEED, _DEFAULT_SPEED*0.7, _DEFAULT_SPEED*0.7*0.7];
+
+    var _LID_PREFIX = "his-trace-";
+
+    // speed
+    var _v_speed = 2;
+
+    // position cache
+    var _poss_cache = [];
+    
+    // trace hint cache
+    var _hint_cache_month = {};
+    var _hint_cache_date = {};
+    
+    // current terminal serial no
+    var _cur_terminal_serial_no = null;
+    var _cur_terminal_name = '';
+
+    // control panel width,height
+    var _ctrl_panel_w = 184;
+    var _ctrl_panel_h = 324;
+
+    // position index
+    var _p_idx = 0;
+    var _last_pos = null;
+
+    // pause flag
+    var _pause = false;
+
+    var _markerId = null;
+    var _start_marker_id = "his-trace-start";
+    var _end_marker_id = "his-trace-end";
+
+    var _sdate = null;
+    var _st = null;
+    var _et = null;
+
+    var _openFlag = false;
+    
+    // draw timer
+    var _draw_timer = null;
+    
+    
+    /**
+     * convert digit to time
+     */
+    var _cvt2time = function(value) {
+        var hours = Math.floor(value / 60);
+        var mins = (value - hours * 60);  
+        return (hours < 10 ? "0" + hours : hours) + ":" + ( mins < 10 ? "0" + mins : mins);
+    };
+    
+    
+    /**
+     * Load Trace Hint for a date
+     *
+     */
+    var _loadDateDataHint = function(date) {
+        var curDate = new Date();
+        var curMon = curDate.getMonth() + 1;
+        var curD  = curDate.getDate();
+        var curYmd = ["", curDate.getFullYear(), (curMon < 10 ? "0" + curMon : curMon), (curD < 10 ? "0" + curD : curD) ].join("");
+        var targetYmd = date.replace(/-/g, '');
+
+        if (parseInt(curYmd) < parseInt(targetYmd)) {
+            // set no data
+            _drawSliderHint([]);
+            return;
+        }
+        
+        // load from cache
+        if (_hint_cache_date[targetYmd]) {
+            // draw directly
+            _drawSliderHint(_hint_cache_date[targetYmd]);
+            return;
+        }
+        
+        $("#select_time_data_area").html("数据加载中...");
+
+        var cb = function(data) {
+            // hold to cache
+            var json = $.parseJSON(data);
+            var list = json.dateDataHint;
+            var hhmms = [];
+            var time, hr, mi, idx, oIdx = -1;
+            for (var i = 0; i < list.length; i++) {
+                time = list[i].gdate.substring(8);
+                hr = time.substring(0, 2);
+                mi = time.substring(2);
+                idx = Math.floor((parseInt(hr, 10) * 60 + parseInt(mi, 10)) / 8);
+
+                if (oIdx != idx) {
+                    hhmms.push(idx);
+                    oIdx = idx;
+                }
+            }
+            
+            var hints = [];
+            var hint = null, sLeft = 0, left, width = 0, oLeft = -2;
+            for (var i = 0; i < hhmms.length; i++) {
+                left = hhmms[i];
+                if (left == (oLeft) + 1) {
+                    width++;
+                } else {
+                    if (oLeft != -2) {
+                        hint = {left: sLeft, width: width};
+                        hints.push(hint);
+                    }
+                    sLeft = left;
+                    width = 1;
+                }
+
+                oLeft = left;
+                
+                if (i == hhmms.length - 1) {
+                    hint = {left: sLeft, width: width};
+                    hints.push(hint);
+                }
+            }
+
+            // hold
+            _hint_cache_date[targetYmd] = hints;
+            
+            // draw slider hint
+            _drawSliderHint(hints);
+        };
+
+        // load
+        lbs.common.ajax("portal/load_date_data_hint.shtm", {
+            terminalSerialNo : _cur_terminal_serial_no,
+            date: date
+        }, cb);
+
+    };
+    
+    
+    /**
+     * draw slider hint
+     */
+    var _drawSliderHint = function(hints) {
+        // clear old
+        $("#select_time_data_area").html("");
+        var tpl = '<div style="left: #left#px; width: #width#px;"></div>';
+        var tpls = [];
+        for (var i = 0; i < hints.length; i++) {
+            tpls.push(tpl.replace(/#left#/g, hints[i].left).replace(/#width#/g, hints[i].width));
+        }
+        
+        $("#select_time_data_area").html(tpls.join(""));
+    };
+
+
+    /**
+     * load tract hint for a month
+     *
+     */
+    var _loadMonthDataHint = function(year, month) {
+        var date = new Date();
+        var curMonth = date.getMonth() + 1;
+        var curYearMon = ["", date.getFullYear(), (curMonth < 10 ? "0" + curMonth : curMonth)].join("");
+        var targetYearMon = ["", year, (month < 10 ? "0" + month : month)].join("");
+
+        if (parseInt(curYearMon) < parseInt(targetYearMon)) {
+            return;
+        }
+
+        // load from cache
+        if (_hint_cache_month[targetYearMon]) {
+            // draw directly
+            lbs_date_calendar.setDataGrid(_hint_cache_month[targetYearMon]);
+            return;
+        }
+        
+        $("#p_hc_c_info").html("数据加载中...");
+
+        var cb = function(data) {
+            // hold to cache
+            var json = $.parseJSON(data);
+            var list = json.monthDataHint;
+            var days = [];
+            for (var i = 0; i < list.length; i++) {
+                days[i] = list[i].gdate.replace(/-/g, '');
+            }
+
+            // hold
+            _hint_cache_month[targetYearMon] = days;
+
+            // draw calendar hint
+            lbs_date_calendar.setDataGrid(days);
+            
+            $("#p_hc_c_info").html("数据加载完成!");
+        };
+
+        // load
+        lbs.common.ajax("portal/load_month_data_hint.shtm", {
+            terminalSerialNo : _cur_terminal_serial_no,
+            yearMon: targetYearMon
+        }, cb);
+
+    };
+
+    /**
+     * reset all
+     */
+    var _reset_all = function() {
+
+        // clear marker
+        vp.m.removeMark(_markerId);
+        vp.m.removeMark(_start_marker_id);
+        vp.m.removeMark(_end_marker_id);
+
+        // remove line
+        for (var i = 0; i < _poss_cache.length; i++) {
+            vp.m.removeLine(_LID_PREFIX + i);
+        }
+
+        _poss_cache = [];
+        _v_speed = 2;
+        _cur_terminal_name = vp.v.cur_terminal.terminal_name;
+        _p_idx = 0;
+        _last_pos = null;
+        _pause = false;
+    };
+
+    
+    var _clearDrawer = function() {
+        if (_draw_timer != null) {
+            window.clearTimeout(_draw_timer);
+            _draw_timer = null;
+        }
+    };
+    
+
+    /**
+     * draw trace
+     */
+    var _drawTrace = function() {
+
+        var pos = _poss_cache[_p_idx];
+
+        if (_p_idx == _poss_cache.length - 1) {
+
+            // clear drawer
+            _clearDrawer();
+            
+            // draw line
+            vp.m.drawLine({
+                lid: _LID_PREFIX + _p_idx,
+                xs: [_last_pos.lng, pos.lng],
+                ys: [_last_pos.lat, pos.lat],
+                color: lbs.common.getLineColor(pos.speed)
+            });
+
+            // show end point on map
+            vp.m.showLoc({
+                mkid: _end_marker_id,
+                name: "",
+                imgUrl: lbs.consts.PIMG.END,
+                x: pos.lng,
+                y: pos.lat,
+                inView: true
+            });
+            
+            vp.m.showLoc({
+                mkid: _markerId,
+                name: _cur_terminal_name,
+                imgUrl: lbs.consts.PIMG.HISTORY,
+                x: pos.lng,
+                y: pos.lat,
+                center: true
+            });
+
+            // show pos info
+            vp.v.cur_terminal.posChanged(pos);
+
+            window.setTimeout(function() {
+            	alert("回放结束！");
+            }, 10);
+            
+            return;
+        }
+        
+        if (_p_idx == 0) {
+            // show start marker only
+            vp.m.showLoc({
+                mkid: _start_marker_id,
+                name: "",
+                imgUrl: lbs.consts.PIMG.START,
+                x: pos.lng,
+                y: pos.lat,
+                center: true
+            });
+        } else {
+            // draw line
+            vp.m.drawLine({
+                lid: _LID_PREFIX + _p_idx,
+                xs: [_last_pos.lng, pos.lng],
+                ys: [_last_pos.lat, pos.lat],
+                color: lbs.common.getLineColor(pos.speed)
+            });
+            
+            // show end point on map
+            vp.m.showLoc({
+                mkid: _markerId,
+                name: _cur_terminal_name,
+                imgUrl: lbs.consts.PIMG.HISTORY,
+                x: pos.lng,
+                y: pos.lat,
+                inView: true
+            });
+        }
+        
+        // show pos info
+        vp.v.cur_terminal.posChanged(pos);
+        
+        // go next
+        _p_idx = _p_idx + 1;
+        _last_pos = pos;
+        
+        // clear timeout
+        _clearDrawer();
+
+        if (!_pause) {
+            // find next one
+            _draw_timer = window.setTimeout(_drawTrace, _SPEEDS[_v_speed]);
+        }
+    };
+    
+    
+    /**
+     * get history trace
+     */
+    var _getHistrace = function(autoPlay, lastTime) {
+
+        var cb = function(respText) {
+            var locs = $.parseJSON(respText).locs;
+
+            // filter blogloc
+            if (!$("#chk_show_blogloc")[0].checked) {
+                lbs.common.filterBlogLoc(locs);
+            }
+
+            if (lbs.common.isEmptyList(locs.poss)) {
+                vp.v.log.info("没有轨迹信息!");
+                return;
+            } else {
+                // hold
+                _poss_cache = _poss_cache.concat(locs.poss);
+
+                // draw trace
+                // start draw timer
+                if (autoPlay) {
+                    _draw_timer = window.setTimeout(_drawTrace, _SPEEDS[_v_speed]);
+                    // hide query panel
+                    $("#btn_show_histrace").trigger('click');
+                }
+                
+                // has next page.
+                if (locs.hasNext) {
+                    _getHistrace(false, locs.lastTime);
+                }
+
+                // set zoom
+                var zoom = vp.m.mapConfig('zoom');
+                if (zoom <= 16) {
+                    vp.m.mapConfig('zoom', 16);
+                }
+            }
+        };
+        
+        var params = {
+            terminalId: _cur_terminal_serial_no,
+            date: _sdate,
+            st: _st,
+            et: _et,
+            lastTime: lastTime || ""
+        };
+
+        // query
+        lbs.common.ajax("portal/get_history_locations.shtm", params, cb);
+        params = null;
+        cb = null;
+    };
+
+    /**
+     * initialize
+     */
+    var init = function(terminalSerialNo) {
+        
+        // hold
+        _cur_terminal_serial_no = terminalSerialNo;
+        // marker id.
+        _markerId = _MK_PREFIX + terminalSerialNo;
+
+        
+        // init width and height
+        $("#panel_history_query").css({width: _ctrl_panel_w + 'px', height: _ctrl_panel_h + 'px'});
+        $("#panel_history_query").draggable({ handle: "h6" });
+
+        // time slider
+        $("#select_time" ).slider({
+            range: true,
+            min: 0,
+            max: 1440,
+            values: [0, 1440],
+            slide: function(event, ui) {
+                $("#sp_tm_st").html(_cvt2time(ui.values[0]));
+                $("#sp_tm_et").html(_cvt2time(ui.values[1]));
+            }
+        });
+
+        // show history control panel
+        $("#btn_show_histrace").click(function() {
+            $("#panel_history_query").toggle(!_openFlag);
+            _openFlag = !_openFlag;
+            if (_openFlag) {
+                $("#panel_history_control").toggle(_openFlag);
+
+                // bind data
+                lbs_date_calendar.bindData();
+            }
+        });
+
+        // on date click
+        lbs_date_calendar.onDateClick = function(date) {
+            var disp = "日期：" + date;
+            if (disp == $("#p_hc_c_info").html()) {
+                return;
+            }
+
+            // change date
+            $("#p_hc_c_info").html(disp);
+
+            // load trace hint for a date.
+            _loadDateDataHint(date);
+        };
+
+        // on month change
+        lbs_date_calendar.onMonthChange = function(year, month) {
+            _loadMonthDataHint(year, month);
+        };
+
+
+        // query and play
+        $("#btn_query_play").click(function() {
+            // reset all
+            _reset_all();
+            
+            _sdate = $("#his_date").val();
+
+            if (lbs.common.isEmpty(_sdate)) {
+                alert("请求选择日期！");
+                return;
+            }
+
+            _st = $("#sp_tm_st").html();
+            _et = $("#sp_tm_et").html();
+            
+            // get history trace
+            _getHistrace(true, "");
+
+        });
+
+        $("#btn_histrace_pause").click(function() {
+            _pause = !_pause;
+            if (_pause) {
+                _clearDrawer();
+                $(this).html('<i class="icon-play"></i> ');
+                $(this).attr('title', '播放');
+            } else {
+                _draw_timer = window.setTimeout(_drawTrace, _SPEEDS[_v_speed]);
+                $(this).html('<i class="icon-pause"></i> ');
+                $(this).attr('title', '暂停');
+            }
+            
+        });
+        
+        $("#btn_histrace_backward").click(function() {
+            if (_v_speed > 0) {
+                _v_speed = _v_speed - 1;
+            }
+        });
+        
+        $("#btn_histrace_forward").click(function() {
+            if (_v_speed < 4) {
+                _v_speed = _v_speed + 1;
+            }
+        });
+
+        $("#btn_histrace_clear").click(function() {
+            _clearDrawer();
+            _reset_all();
+            $("#panel_history_control").toggle(false);
+        });
+
+    };
+
+
+    // export
+    vp.page.history = {};
+    vp.page.history.init = init;
+
+})();

@@ -1,0 +1,67 @@
+(function() {
+    
+	// geocoder
+	var geocoder = new google.maps.Geocoder();
+	function _convert(e){if(vp.v.map_type=='google-overseas'||e.x<73.499413||e.x>134.772810||e.y<18.153521||e.y>53.560973){return e}var i=Math.PI,c=6378245,j=0.006693421622965943;var k=e.x-105;var h=e.y-35;var f=300+k+2*h+0.1*k*k+0.1*k*h+0.1*Math.sqrt(Math.abs(k));f+=(20*Math.sin(6*k*i)+20*Math.sin(2*k*i))*2/3;f+=(20*Math.sin(k*i)+40*Math.sin(k/3*i))*2/3;f+=(150*Math.sin(k/12*i)+300*Math.sin(k/30*i))*2/3;var d=-100+2*k+3*h+0.2*h*h+0.1*k*h+0.2*Math.sqrt(Math.abs(k));d+=(20*Math.sin(6*k*i)+20*Math.sin(2*k*i))*2/3;d+=(20*Math.sin(h*i)+40*Math.sin(h/3*i))*2/3;d+=(160*Math.sin(h/12*i)+320*Math.sin(h*i/30))*2/3;var a=e.y/180*i;var g=Math.sin(a);g=1-j*g*g;var b=Math.sqrt(g);f=(f*180)/(c/b*Math.cos(a)*i);d=(d*180)/((c*(1-j))/(g*b)*i);return{x:e.x+f,y:e.y+d}};
+
+    var getLocation = function(x, y, cb) {
+    	if (vp.v.map_type=='google-overseas') {
+    		getLocation4Overseas(x, y, cb);
+    	} else {
+    		getLocation4China(x, y, cb);
+    	}
+    };
+
+    var getLocation4China = function(x, y, cb) {
+        var url = "http://api.map.baidu.com/geocoder/v2/"
+            + "?ak=" + lbs.consts.BAIDU_KEY
+            + "&coordtype=wgs84ll"
+            + "&location=" + y + "," + x
+            + "&output=json&pois=1";
+        $.ajax({
+            type: "get",
+            async: true,
+            url: url,
+            dataType : "jsonp",
+            jsonp: "callback",
+            success: function(data) {
+                if (data.status != '0') {
+                    cb("地图服务器请求错误：未知区域");
+                }
+                var pois = data.result.pois;
+                var desc = '';
+                if (pois != null && pois.length > 0) {
+                    desc = pois[0].addr + pois[0].name + '附近';
+                } else {
+                    desc = data.result.formatted_address;
+                }
+
+                cb(desc);
+            }
+        });
+    };
+
+	
+    var getLocation4Overseas = function(x, y, cb) {
+    	var gpos = vp.m.adjustXY(x, y);
+    	var latLng = new google.maps.LatLng(gpos.y, gpos.x);
+    	geocoder.geocode({"location": latLng}, function(results, status) {
+    		if (status == google.maps.GeocoderStatus.OK) {
+    			if (results != null && results.length > 0) {
+    			    cb(results[0].formatted_address);
+    			}
+    		} else if (status == google.maps.GeocoderStatus.ZERO_RESULTS) {
+    			cb("Unknown Area!");
+    		} else {
+    			// cb("地图服务器请求错误：未知区域," + status);
+    		}
+    	});
+    };
+
+    // export
+    vp.m.getLocation = getLocation;
+    vp.m.adjustXY = function(x, y) {
+    	return _convert({x: parseFloat(x), y: parseFloat(y)});
+    };
+
+})();

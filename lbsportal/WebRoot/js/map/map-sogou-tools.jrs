@@ -1,0 +1,61 @@
+// Convert 
+(function() {
+    
+/*    var simpleConverter = function(xs, ys, fromType, toType, cb) {
+        var url = "http://api.map.baidu.com/ag/coord/convert?from="
+            + fromType + "&to=" + toType + "&mode=1&x="
+            + xs.join(",") + "&y=" + ys.join(",");
+        $.ajax({
+            type: "get",
+            async: false,
+            url: url,
+            dataType : "jsonp",
+            jsonp: "callback",
+            success: function(xys) {
+                var xs = [];
+                var ys = [];
+                for (var i = 0; i < xys.length; i++) {
+                    xs.push(lbs.common.Base64.decode(xys[i].x));
+                    ys.push(lbs.common.Base64.decode(xys[i].y));
+                }
+                cb(xs, ys);
+            },
+            error: function() {
+                cb([], []);
+            }
+        });
+    };*/
+
+    var getLocation = function(x, y, cb) {
+        var url = "http://api.map.baidu.com/geocoder/v2/"
+            + "?ak=" + lbs.consts.BAIDU_KEY
+            + "&coordtype=wgs84ll"
+            + "&location=" + y + "," + x
+            + "&output=json&pois=1";
+        $.ajax({
+            type: "get",
+            async: true,
+            url: url,
+            dataType : "jsonp",
+            jsonp: "callback",
+            success: function(data) {
+                if (data.status != '0') {
+                    cb("地图服务器请求错误：未知区域");
+                }
+                var pois = data.result.pois;
+                var desc = '';
+                if (pois != null && pois.length > 0) {
+                    desc = pois[0].addr + pois[0].name + '附近';
+                } else {
+                    desc = data.result.formatted_address;
+                }
+
+                cb(desc);
+            }
+        });
+    };
+
+    // export
+    vp.m.getLocation = getLocation;
+    
+})();

@@ -1,0 +1,425 @@
+/**
+ * COMMON JS
+ */
+
+// to string
+lbs.U.toStr = function(o) {
+    var all = '';
+    for (var k in o) {
+        all += k + ":" + o[k] + '\n';
+    }
+    return all;
+};
+
+// encode
+lbs.U.encodeEach = function(o) {
+    for (var k  in o) {
+        o[k] = Ext.encode(o[k]);
+    }
+};
+
+// is empty
+lbs.U.isEmpty = function(o) {
+	if (o === undefined) return true;
+	if (o == null) return true;
+	if (o == "") return true;
+	return false;
+};
+
+
+/**
+ * Create Top Tab
+ *
+ * @param opts Options (id, name, url, qparams, icon)
+ */
+lbs.U.createTopTab = function(opts) {
+	var menuId = "tbp_" + opts.id;
+    var tab = Ext.getCmp(menuId);
+    if (tab == null) {
+    	var qparams = null;
+    	if (!lbs.U.isEmpty(opts.qparams)) {
+    		qparams = opts.qparams;
+    	} else {
+    		qparams = {};
+    	}
+    	qparams.menuId = menuId;
+        tab = Ext.create("Ext.panel.Panel", {
+            id: menuId,
+            title: opts.name,
+            icon: opts.icon || "",
+            closable: true,
+            layout: "fit",
+            loader: {
+                baseParams: qparams,
+                autoLoad: true,
+                scripts: true,
+                url: opts.url
+            }
+        });
+        lbs.G.tabs.add(tab).show();
+    } else {
+    	lbs.G.tabs.setActiveTab(tab);
+    }
+};
+
+
+/**
+ * Create Top Tab In Iframe
+ *
+ * @param opts Options (id, name, url, qparams, icon)
+ */
+lbs.U.createTopTabInIframe = function(opts) {
+    var menuId = "tbp_" + opts.id;
+    var tab = Ext.getCmp(menuId);
+    if (tab == null) {
+        var qparams = Ext.merge({menuId: menuId}, opts.qparams);
+        var qps = '';
+        for (var i in qparams) {
+            qps += '' + i + '=' + qparams[i] + '&';
+        }
+        qps = qps.substring(0, qps.length - 1);
+
+        var url = opts.url + "?" + qps;
+        tab = Ext.create("Ext.panel.Panel", {
+            id: menuId,
+            title: opts.name,
+            icon: opts.icon || "",
+            closable: true,
+            layout: "fit",
+            html: "<iframe frameborder='0' name='" + menuId + "' height='100%' width='100%' src='" + url + "' ></iframe>"
+        });
+        lbs.G.tabs.add(tab).show();
+    } else {
+        lbs.G.tabs.setActiveTab(tab);
+    }
+};
+
+
+/**
+ * delete top Tab Page
+ * @param 
+ */
+lbs.U.deleteTopTab = function(tabId) {
+    // var tab = Ext.getCmp(tabId);
+    lbs.G.tabs.remove(tabId);
+};
+
+
+/**
+ * Show Tab Content
+ *
+ * @param opts Options (id(String), items(Object), focusId(String))
+ */
+lbs.U.showTabContent = function(opts) {
+	Ext.getCmp(opts.id).add({
+		xtype: "panel",
+	    bodyPadding: 0,
+	    border: 0,
+	    layout: "border",
+	    margin: 0,
+	    items: opts.items
+	});
+	if (!lbs.U.isEmpty(opts.focusId)) {
+		Ext.getCmp(opts.focusId).focus();
+	}
+};
+
+/**
+ * Initialize Remote combo box
+ *
+ */
+lbs.U.initRemoteComboBox = function(comboId, value) {
+	var store = Ext.getCmp(comboId).getStore();
+	store.on("load", function() {
+	    Ext.getCmp(comboId).setValue(value);
+	});
+	store.load();
+};
+
+/**
+ * Show Error Message
+ */
+lbs.U.showError = function(msg) {
+    Ext.MessageBox.show({
+        title: lbs.G.MsgTitle,
+        msg: msg,
+        buttons: Ext.MessageBox.OK,
+        icon: Ext.MessageBox.ERROR
+    });
+};
+
+
+/**
+ * Show Info Message
+ */
+lbs.U.showInfo = function(msg) {
+    Ext.MessageBox.show({
+        title: lbs.G.MsgTitle,
+        msg: msg,
+        buttons: Ext.MessageBox.OK,
+        icon: Ext.MessageBox.INFO
+    });
+};
+
+
+
+/**
+ * Organization Select Window.
+ *
+ * @param opts {animateTarget: 'string/element', callback: fn, selMode: string}
+ */
+lbs.G.OrgWin = null;
+lbs.U.showOrgWin = function(opts) {
+    var at = opts.at || '';
+    var callback = opts.callback;
+    var selMode = opts.selMode || '0';
+
+    var treeId = "lbs.U.CommonSelect.OrgTree";
+    if (lbs.G.OrgWin == null) {
+        var _store = Ext.create("Ext.data.TreeStore", {
+            fields: [
+                 { name : "id", type : "string" },
+                 { name : "org_name", type:"string"},
+                 { name : "text", type : "string" },
+                 //{ name : "checked", type : "boolean" },
+                 { name : "leaf", type : "boolean"}
+            ],
+            nodeParam : "parentOrgId",
+            proxy: {
+                type: "ajax",
+                url: "common/load_orglist.shtm",
+                reader: {
+                    root: "orgList"
+                }
+            },
+            root: {
+                expanded : true,
+                id : lbs.C.TOP_GROUP
+            }
+        });
+
+        lbs.G.OrgWin = Ext.create("Ext.window.Window", {
+            title: "企业组织选择",
+            height: 360,
+            width: 240,
+            layout: "fit",
+            closable: true,
+            closeAction: "hide",
+            animateTarget: at,
+            modal: true,
+            renderTo: Ext.getBody(),
+            items: {
+                id: treeId,
+                xtype: "treepanel",
+                useArrows: true,
+                //border: false,
+                rootVisible: false,
+                store: _store,
+                dockedItems: [{
+                    xtype: 'toolbar',
+                    dock: 'bottom',
+                    ui: "footer",
+                    items: [{
+                        id: treeId + "_yes",
+                        text: "确定",
+                        width: 50
+                    }]
+                }, {
+                    xtype: 'toolbar',
+                    dock: "top",
+                    ui: "header",
+                    items: [{
+                        text: "展开",
+                        listeners: {
+                            click: function() {
+                                Ext.getCmp(treeId).expandAll();
+                            }
+                        }
+                    }, {
+                        text: "收起",
+                        listeners: {
+                            click: function() {
+                                Ext.getCmp(treeId).collapseAll();
+                            }
+                        }
+                    }, {
+                        text: "刷新",
+                        listeners: {
+                            click: function() {
+                                _store.load();
+                            }
+                        }
+                    }]
+                }]
+            }
+        });
+    } else {
+        // refresh tree every time
+        Ext.getCmp(treeId).getStore().load();
+        /*Ext.Array.each(Ext.getCmp(treeId).getChecked(), function(item) {
+            item.set({checked: false});
+        });*/
+    }
+
+    var me = lbs.U.showOrgWin;
+    var oldOkbtnAction = me.okbtnAction;
+    me.okbtnAction = function() {
+        var list = Ext.getCmp(treeId).getChecked();
+        if (selMode == '0') {
+            if (list.length != 1) {
+                lbs.U.showError("只能选中一个企业组织！");
+                return;
+            }
+            var org = list[0];
+            var parentOrg = org.parentNode;
+            var parentName = parentOrg.raw.text;
+            if (parentName == 'Root') {
+                parentName = "";
+            } else {
+                parentName = parentName + "->";
+            }
+            callback(org.raw.id, parentName + org.raw.text);
+        } else {
+            // TODO mutiselect.
+        }
+
+        // hide
+        lbs.G.OrgWin.hide(at);
+    } ;
+
+    // show
+    lbs.G.OrgWin.show(at, function() {
+        var okbtn = Ext.getCmp(treeId + "_yes");
+        // remove old
+        if (oldOkbtnAction != null && oldOkbtnAction != undefined) {
+            okbtn.removeListener("click", oldOkbtnAction);
+        }
+        okbtn.on("click", me.okbtnAction);
+    });
+};
+
+
+
+/**
+ * is Auth By Role
+ * @param referRole Reference Role ID
+ */
+lbs.U.isAuthByRole = function(referRoleId) {
+    var userRoleId = Ext.util.Cookies.get("role");
+    return (Math.floor(userRoleId) <= Math.floor(referRoleId)) ? false : true;
+};
+
+
+
+/**
+ * Show Alarm List (Latest 10 alarm)
+ *
+ * @param opts {terminalSerialNo}
+ */
+lbs.G.AlarmListWin = null;
+lbs.U.showAlarmList = function(opts) {
+    var storeId = "stid_lalarm_list";
+    if (lbs.G.AlarmListWin == null) {
+        var _store = Ext.create("Ext.data.Store", {
+            storeId: storeId,
+            fields: [
+                 {name:"terminal_serial_no", type:"string"},
+                 {name:"terminal_name", type:"string"},
+                 {name:"alarm_type", type:"string"},
+                 {name:"loc_status", type:"string"},
+                 {name:"content", type:"string"},
+                 {name:"lng", type:"string"},
+                 {name:"lat", type:"string"},
+                 {name:"speed", type:"string"},
+                 {name:"tmn_status", type:"string"},
+                 {name:"notify_status", type:"string"},
+                 {name:"owner", type:"string"},
+                 {name:"alarm_time", type:"string"},
+                 {name:"create_time", type:"string"}
+            ],
+            pageSize: 10,
+            proxy: {
+                type: "ajax",
+                url: "alarm/query.shtm",
+                actionMethods: {
+                    read: "POST"
+                },
+                reader: {
+                    root: "alarmList",
+                    totalProperty: "totalCount"
+                },
+                simpleSortMode: true,
+                listeners: {
+                    exception: function(proxy, resp, op, opts) {
+                        var obj = Ext.JSON.decode(resp.responseText);
+                        lbs.U.showError(obj.errorMsgs);
+                    }
+                }
+            }
+        });
+        
+        var _gridPanel = Ext.create("Ext.grid.Panel", {
+            margin:  0,
+            autoScroll: true,
+            store: _store,
+            border: false,
+            columns: [
+                 { text: "终端编号",  dataIndex: "terminal_serial_no" ,width: 100},
+                 { text: "昵称",  dataIndex: "terminal_name", width: 100},
+                 { text: "车主姓名", dataIndex: "owner", width: 100},
+                 { text: "告警类型", dataIndex: "alarm_type", width: 90,
+                     renderer: function(value) {
+                        return lbs.C.ALARM_TYPE[value];
+                     }
+                 },
+                 { text: "定位结果",  dataIndex: "loc_status", width: 80,
+                     renderer: function(value) {
+                         if (lbs.U.isEmpty(value)) {
+                             return "无";
+                         } else {
+                             return lbs.C.LOC_RESULT[value];
+                         }
+                     }
+                 },
+                 { text: "速度(km/h)", dataIndex: "speed", width: 80,
+                     renderer: function(value) {
+                         return lbs.U.isEmpty(value) ? "无" : value;
+                     }
+                 },
+                 { text: "终端状态", dataIndex: "tmn_status", width: 90,
+                     renderer: function(value) {
+                         if (lbs.U.isEmpty(value)) {
+                             return "无";
+                         } else {
+                             return lbs.C.TMN_STATUS[value];
+                         }
+                     }
+                 },
+                 { text: "告警时间", dataIndex: "alarm_time", width: 140}
+            ]
+        });
+        
+        lbs.G.AlarmListWin = Ext.create("Ext.window.Window", {
+            title: "最近告警列表",
+            height: 360,
+            width: 800,
+            layout: "fit",
+            closable: true,
+            closeAction: "hide",
+            //animateTarget: at,
+            modal: true,
+            renderTo: Ext.getBody(),
+            items: _gridPanel
+        });
+    }
+    
+    lbs.G.AlarmListWin.show();
+    var store = Ext.data.StoreManager.lookup(storeId);
+    store.loadRecords([]);
+    store.load({
+        params: {
+            terminalSerialNo: opts.terminalSerialNo
+        }
+    });
+};
+

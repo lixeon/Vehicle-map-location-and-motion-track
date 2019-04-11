@@ -1,0 +1,828 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+<!-- query terminal status list -->
+<bean id="sql_manager_getTerminalStatusList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+               select distinct
+                    A.TERMINAL_SERIAL_NO,
+                    A.TERMINAL_NAME,
+                    A.OWNER,
+                    A.CITY_ID,
+                    B.VALUE AS ON_OFF_STATUS,
+                    C.ORG_ID,
+                    D.VALUE AS USER_MOBILE
+                from
+                    T_TERMINAL A,
+                    T_TERMINAL_CONFIG B,
+                    T_ORG_TMN_RL C,
+                    T_TERMINAL_CONFIG D
+                where
+                    A.TERMINAL_SERIAL_NO = B.TERMINAL_SERIAL_NO
+                and A.TERMINAL_SERIAL_NO = C.TERMINAL_SERIAL_NO
+                and A.TERMINAL_SERIAL_NO = D.TERMINAL_SERIAL_NO
+                and B.CONFIG_KEY = :login_status_key
+                and D.CONFIG_KEY = :user_mobile_key
+                and length(C.ORG_ID) = :orgLength
+             <[ and B.VALUE = :onlineStatus ]>
+             <[ and A.TERMINAL_SERIAL_NO = :terminalSerialNo ]>
+             <[ and D.VALUE = :userMobile ]>
+             <[ and A.OWNER = :owner ]>
+                and C.ORG_ID like :orgId
+                order by
+                    B.VALUE DESC, B.UPD_TIME DESC
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+
+
+<!-- Update Notify Status -->
+<bean id="sql_manager_updateAlarmNotifyStatus" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update
+                    T_TERMINAL_ALARM
+                set
+                    NOTIFY_STATUS =:newStatus
+               where
+                    ID =:id
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+
+<!-- query alarm list -->
+<bean id="sql_manager_queryAlarmList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select distinct
+                       A.ID,
+                       A.TERMINAL_SERIAL_NO,
+                       A.ALARM_TYPE,
+                       A.CONTENT,
+                       A.LOC_STATUS,
+                       A.LNG,
+                       A.LAT,
+                       A.SPEED,
+                       A.AZIMUTH,
+                       A.TMN_STATUS,
+                       A.SMS_FLAG,
+                       A.NOTIFY_STATUS,
+                       A.TERMINAL_OWNER,
+                       DATE_FORMAT(A.ALARM_TIME, '%Y-%m-%d %T') as ALARM_TIME,
+                       DATE_FORMAT(A.CREATE_TIME, '%Y-%m-%d %T') as CREATE_TIME,
+                       C.TERMINAL_NAME,
+                       C.OWNER
+                  from T_TERMINAL_ALARM A,
+                       T_ORG_TMN_RL B,
+                       T_TERMINAL C
+                 where 
+                       A.TERMINAL_SERIAL_NO = B.TERMINAL_SERIAL_NO
+                   and A.TERMINAL_SERIAL_NO = C.TERMINAL_SERIAL_NO
+                <[ and B.ORG_ID like :orgId ]>
+                <[ and A.SMS_FLAG = :smsFlag ]>
+                <[ and C.TERMINAL_SERIAL_NO =:terminalSerialNo ]>
+                <[ and A.ALARM_TYPE =:alarmType ]>
+                <[ and A.ALARM_TIME >= :alarmTimeSt ]>
+                <[ and A.ALARM_TIME <= :alarmTimeEt ]>
+                <[ and A.TERMINAL_OWNER = :userMobile ]>
+                <[ and C.OWNER = :owner ]>
+                 order by A.CREATE_TIME desc
+                
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- Query Company's Terminal Count -->
+<bean id="sql_manager_queryCompanyTmnCountAll" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    count(1) as TOTAL
+                from
+                    T_ORG_TMN_RL A
+                where 1 = 1
+             <[ and length(A.ORG_ID) = :orgLength ]>
+             <[ and A.ORG_ID = :orgId ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- Query Company's Terminal -->
+<bean id="sql_manager_queryCompanyTerminals" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                    T_ORG_TMN_RL A
+                where 1 = 1
+             <[ and length(A.ORG_ID) = :orgLength ]>
+             <[ and A.ORG_ID = :orgId ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- Query Company's Terminal Count -->
+<bean id="sql_manager_queryCompanyTmnCount" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    count(1) as TOTAL
+                from
+                    T_ORG_TMN_RL A,
+                    T_TERMINAL_CONFIG B
+                where
+                    A.TERMINAL_SERIAL_NO = B.TERMINAL_SERIAL_NO
+             <[ and length(A.ORG_ID) = :orgLength ]>
+             <[ and A.ORG_ID = :orgId ]>
+             <[ and B.CONFIG_KEY = :configKey ]>
+             <[ and B.VALUE = :configValue ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- query org (company) list -->
+<bean id="sql_manager_queryCompanyList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    A.ORG_ID,
+                    A.ORG_NAME,
+                    A.ORG_COLOR,
+                    A.CORP_ACCOUNT,
+                    A.CORP_AREAID,
+                    B.UID as manager_id,
+                    B.NAME as manager_name,
+                    B.MOBILE as manager_mobile,
+                    B.ADDR,
+                    B.COMPANY
+                from
+                    T_BSF_ORG A,
+                    T_USER B
+                where
+                    A.ORG_ID = B.ORG_ID
+             <[ and A.PARENT_ORG_ID = :parentOrgId ]>
+             <[ and A.ORG_ID = :orgId ]>
+                order by A.ORG_ID
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- Load terminal list  -->
+<bean id="sql_manager_queryTerminalList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select distinct
+                    A.TERMINAL_SERIAL_NO,
+                    A.USER_TYPE,
+                    A.TERMINAL_OP_NO,
+                    A.TERMINAL_NAME,
+                    A.TERMINAL_IMEI,
+                    A.TERMINAL_IMSI,
+					A.TERMINAL_TYPE,
+					A.PROVIDER,
+                    A.PROVINCE_ID,
+                    A.OWNER,
+                    A.OWNER_TEL,
+                    A.OWNER_ADDR,
+                    A.OWNER_VEHICE_NO,
+                    A.OWNER_VCBODY_NO,
+                    A.OWNER_VCMOTOR_NO,
+                    A.OWNER_INSURANCE,
+                    A.OWNER_REMARK,
+                    A.CITY_ID,
+                    A.STATUS,
+                    DATE_FORMAT(A.SERVICE_END_DATE, '%Y-%m-%d') as SERVICE_END_DATE,
+                    DATE_FORMAT(A.REG_DATE, '%Y-%m-%d %T') as REG_DATE,
+                    C.ORG_ID,
+                    C.ORG_NAME,
+                    D.VALUE AS USER_MOBILE
+                from
+                    T_TERMINAL A,
+                    T_ORG_TMN_RL B,
+                    T_BSF_ORG C,
+                    T_TERMINAL_CONFIG D
+                where
+                    A.TERMINAL_SERIAL_NO = B.TERMINAL_SERIAL_NO
+                and A.TERMINAL_SERIAL_NO = D.TERMINAL_SERIAL_NO
+                and D.CONFIG_KEY = :user_mobile_key
+                and B.ORG_ID = C.ORG_ID
+                <[ and C.PARENT_ORG_ID = :rootOrgId ]>
+                <[ and B.ORG_ID = :orgId ]>
+                <[ and A.TERMINAL_NAME like :terminalName ]>
+                <[ and A.TERMINAL_SERIAL_NO = :terminalSerialNo ]>
+                <[ and A.TERMINAL_OP_NO = :terminalOpNo ]>
+                <[ and D.VALUE = :userMobile ]>
+                <[ and A.OWNER like :owner ]>
+                order by
+                    A.REG_DATE DESC
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- add terminal info -->
+<bean id="sql_manager_addTerminal" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                insert into
+                    T_TERMINAL
+                set
+                    TERMINAL_SERIAL_NO = :terminalSerialNo,
+                    PASSWORD = :password,
+                    USER_TYPE = :userType,
+                    TERMINAL_OP_NO = :terminalOpNo,
+                    TERMINAL_NAME = :terminalName,
+                    <[ TERMINAL_IMEI = :terminalIMEI, ]>
+                    <[ TERMINAL_IMSI = :terminalIMSI, ]>
+                    <[ TERMINAL_TYPE = :terminalType, ]>
+                    <[ OWNER = :owner, ]>
+                    <[ OWNER_TEL = :ownerTel, ]>
+                    <[ OWNER_ADDR = :ownerAddr, ]>
+                    <[ OWNER_VEHICE_NO = :ownerVehiceNo, ]>
+                    <[ OWNER_VCBODY_NO = :ownerVcbodyNo, ]>
+                    <[ OWNER_VCMOTOR_NO = :ownerVcmotorNo, ]>
+                    <[ OWNER_INSURANCE = :ownerInsurance, ]>
+                    <[ OWNER_REMARK = :ownerRemark, ]>
+                    <[ PROVIDER = :provider, ]>
+                    <[ EXT_FIELD1 = :extField1, ]>
+                    <[ EXT_FIELD2 = :extField2, ]>
+                    <[ EXT_FIELD3 = :extField3, ]>
+                    REG_DATE = :regDate,
+                    SERVICE_END_DATE = :serviceEndDate,
+                    PROVINCE_ID = :provinceId,
+                    CITY_ID = :cityId,
+                    STATUS = :status,
+                    CREATOR = :creator,
+                    CREATE_DATE = :createDate
+                    
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- add terminal info -->
+<bean id="sql_manager_addTerminalConfigs" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                insert into
+                    T_TERMINAL_CONFIG
+                values
+                (:terminalSerialNo,:ck1,:ck1value,:ck1status,:updTime),
+                (:terminalSerialNo,:ck2,:ck2value,:ck2status,:updTime),
+                (:terminalSerialNo,:ck3,:ck3value,:ck3status,:updTime),
+                (:terminalSerialNo,:ck4,:ck4value,:ck4status,:updTime),
+                (:terminalSerialNo,:ck5,:ck5value,:ck5status,:updTime),
+                (:terminalSerialNo,:ck6,:ck6value,:ck6status,:updTime),
+                (:terminalSerialNo,:ck7,:ck7value,:ck7status,:updTime),
+                (:terminalSerialNo,:ck8,:ck8value,:ck8status,:updTime),
+                (:terminalSerialNo,:ck9,:ck9value,:ck9status,:updTime),
+                (:terminalSerialNo,:ck10,:ck10value,:ck10status,:updTime),
+                (:terminalSerialNo,:ck11,:ck11value,:ck11status,:updTime),
+                (:terminalSerialNo,:ck12,:ck12value,:ck12status,:updTime),
+                (:terminalSerialNo,:ck13,:ck13value,:ck13status,:updTime),
+                (:terminalSerialNo,:ck14,:ck14value,:ck14status,:updTime),
+                (:terminalSerialNo,:ck15,:ck15value,:ck15status,:updTime),
+                (:terminalSerialNo,:ck16,:ck16value,:ck16status,:updTime),
+                (:terminalSerialNo,:ck17,:ck17value,:ck17status,:updTime),
+                (:terminalSerialNo,:ck18,:ck18value,:ck18status,:updTime),
+                (:terminalSerialNo,:ck19,:ck19value,:ck19status,:updTime),
+                (:terminalSerialNo,:ck20,:ck20value,:ck20status,:updTime),
+                (:terminalSerialNo,:ck21,:ck21value,:ck21status,:updTime),
+                (:terminalSerialNo,:ck22,:ck22value,:ck22status,:updTime),
+                (:terminalSerialNo,:ck23,:ck23value,:ck23status,:updTime),
+                (:terminalSerialNo,:ck24,:ck24value,:ck24status,:updTime),
+                (:terminalSerialNo,:ck25,:ck25value,:ck25status,:updTime),
+                (:terminalSerialNo,:ck26,:ck26value,:ck26status,:updTime),
+                (:terminalSerialNo,:ck27,:ck27value,:ck27status,:updTime),
+                (:terminalSerialNo,:ck28,:ck28value,:ck28status,:updTime),
+                (:terminalSerialNo,:ck29,:ck29value,:ck29status,:updTime),
+                (:terminalSerialNo,:ck30,:ck30value,:ck30status,:updTime),
+                (:terminalSerialNo,:ck31,:ck31value,:ck31status,:updTime),
+                (:terminalSerialNo,:ck32,:ck32value,:ck32status,:updTime),
+                (:terminalSerialNo,:ck33,:ck33value,:ck33status,:updTime),
+                (:terminalSerialNo,:ck34,:ck34value,:ck34status,:updTime),
+                (:terminalSerialNo,:ck35,:ck35value,:ck35status,:updTime),
+                (:terminalSerialNo,:ck36,:ck36value,:ck36status,:updTime),
+                (:terminalSerialNo,:ck37,:ck37value,:ck37status,:updTime),
+                (:terminalSerialNo,:ck38,:ck38value,:ck38status,:updTime),
+                (:terminalSerialNo,:ck39,:ck39value,:ck39status,:updTime),
+                (:terminalSerialNo,:ck40,:ck40value,:ck40status,:updTime),
+                (:terminalSerialNo,:ck41,:ck41value,:ck41status,:updTime),
+                (:terminalSerialNo,:ck42,:ck42value,:ck42status,:updTime),	
+                (:terminalSerialNo,:ck43,:ck43value,:ck43status,:updTime),	                	
+                (:terminalSerialNo,:ck44,:ck44value,:ck44status,:updTime),
+                (:terminalSerialNo,:ck45,:ck45value,:ck45status,:updTime),
+                (:terminalSerialNo,:ck46,:ck46value,:ck46status,:updTime),	                	
+                (:terminalSerialNo,:ck47,:ck47value,:ck47status,:updTime),
+                (:terminalSerialNo,:ck48,:ck48value,:ck48status,:updTime),	
+                (:terminalSerialNo,:ck49,:ck49value,:ck49status,:updTime),
+                (:terminalSerialNo,:ck50,:ck50value,:ck50status,:updTime),                                	
+                (:terminalSerialNo,:ck51,:ck51value,:ck51status,:updTime)                
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- add ORG-TMN Relation -->
+<bean id="sql_manager_addOrgTerminalRL" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                insert into
+                    T_ORG_TMN_RL
+                values (
+                    :orgId,
+                    :terminalSerialNo
+                ) 
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- get terminal info by serial no and IMEI -->
+<bean id="sql_manager_getTerminalInfoByNo" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    A.TERMINAL_SERIAL_NO,
+                    A.TERMINAL_OP_NO,
+                    A.TERMINAL_IMEI,
+                    A.TERMINAL_IMSI,
+                    A.TERMINAL_TYPE,
+                    A.TERMINAL_NAME,
+                    DATE_FORMAT(A.SERVICE_END_DATE, '%Y-%m-%d') as SERVICE_END_DATE
+                from
+                    T_TERMINAL A
+                where
+                    A.TERMINAL_SERIAL_NO=:terminalSerialNo
+              <[ or A.TERMINAL_IMEI=:terminalIMEI ]>
+              <[ or A.TERMINAL_OP_NO=:terminalOpNo ]>
+              <[ or A.TERMINAL_IMSI=:terminalIMSI ]>
+              <[ or A.TERMINAL_NAME=:terminalName ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- get user by id -->
+<bean id="sql_portal_getUserById" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                    T_USER
+                where
+                    UID = :uid
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- delete user by id -->
+<bean id="sql_portal_deleteUserById" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                delete from T_USER where UID = :uid
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- update user by id -->
+<bean id="sql_portal_updateUserById" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update
+                      T_USER
+                   set
+                   <[ NAME=:name, ]>
+                   <[ PASSWORD=:password, ]>
+                   <[ ROLE_ID=:roleId, ]>
+                   <[ CITY_ID=:cityId, ]>
+                   <[ MOBILE=:mobile, ]>
+                   <[ EMAIL=:email, ]>
+                   <[ ADDR=:addr, ]>
+                   <[ EMAIL=:email, ]>
+                   <[ COMPANY=:company, ]>
+                   <[ REMARK=:remark, ]>
+                   UPDATE_DATE=now()
+                where
+                    UID=:uid
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- add User -->
+<bean id="sql_manager_addUser" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                insert into
+                    T_USER
+                set
+                   UID  = :uid,
+                   NAME = :name,
+                   PASSWORD = :password,
+                   ROLE_ID = :roleId,
+                <[ ORG_ID = :orgId, ]>
+                <[ PROVINCE_ID = :provinceId, ]>
+                <[ CITY_ID = :cityId, ]>
+                <[ MOBILE = :mobile, ]>
+                <[ EMAIL = :email, ]>
+                <[ ADDR = :addr, ]>
+                <[ COMPANY = :company, ]>
+                <[ REMARK = :remark, ]>
+                   CREATOR = :creator,
+                   CREATE_DATE = :createDate,
+                   UPDATE_DATE = :updateDate
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- add org -->
+<bean id="sql_manager_addOrg" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                insert into
+                    T_BSF_ORG
+                set
+                 <[ ORG_COLOR = :orgColor, ]>
+                    ORG_ID = :orgId,
+                    PARENT_ORG_ID = :parentOrgId,
+                    ORG_NAME = :orgName
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- add org -->
+<bean id="sql_manager_updateOrg" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update
+                    T_BSF_ORG
+                set
+                   <[ PARENT_ORG_ID =:parentOrgId, ]>
+                   <[ ORG_NAME =:orgName, ]>
+                   <[ ORG_COLOR =:orgColor, ]>
+                   ORG_ID =:orgId
+                where
+                   ORG_ID =:orgId
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- query org -->
+<bean id="sql_manager_queryOrg" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                   T_BSF_ORG
+                where
+                   ORG_ID = :orgId
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- update terminal by id -->
+<bean id="sql_portal_updateTerminalById" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update
+                      T_TERMINAL
+                   set
+                   <[ PASSWORD=:password, ]>
+                   <[ USER_TYPE=:userType, ]>
+                   <[ TERMINAL_NAME=:terminalName, ]>
+                   <[ TERMINAL_OP_NO=:terminalOpNo, ]>
+                   <[ TERMINAL_IMEI=:terminalIMEI, ]>
+                   <[ TERMINAL_IMSI=:terminalIMSI, ]>
+                   <[ TERMINAL_TYPE=:terminalType, ]>
+                   <[ PROVIDER=:provider, ]>
+                   <[ OWNER=:owner, ]>
+                   <[ OWNER_TEL=:ownerTel, ]>
+                   <[ OWNER_ADDR=:ownerAddr, ]>
+                   <[ OWNER_VEHICE_NO=:ownerVehiceNo, ]>
+                   <[ OWNER_VCBODY_NO=:ownerVcbodyNo, ]>
+                   <[ OWNER_VCMOTOR_NO=:ownerVcmotorNo, ]>
+                   <[ OWNER_INSURANCE=:ownerInsurance, ]>
+                   <[ OWNER_REMARK=:ownerRemark, ]>
+                   <[ SERVICE_END_DATE=:serviceEndDate, ]>
+                   <[ PROVINCE_ID=:provinceId, ]>
+                   <[ CITY_ID=:cityId, ]>
+                   <[ STATUS=:status, ]>
+                      TERMINAL_SERIAL_NO=:terminalSerialNo
+                where
+                      TERMINAL_SERIAL_NO=:terminalSerialNo
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- get city by id -->
+<bean id="sql_portal_cityInfo" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                    T_BSF_CITY
+                where
+                    CITY_ID=:cityId
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- get city by area code -->
+<bean id="sql_portal_getCityInfoByAreaCode" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    *
+                from
+                    T_BSF_CITY
+                where
+                    CITY_CODE=:cityCode
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- load terminal info by terminal id -->
+<bean id="sql_portal_loadTerminalInfoByTmnId" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    A.TERMINAL_SERIAL_NO,
+                    A.PASSWORD,
+                    A.TERMINAL_OP_NO,
+                    A.TERMINAL_NAME,
+                    A.TERMINAL_IMEI,
+                    A.TERMINAL_IMSI,
+                    A.TERMINAL_TYPE,
+                    A.OWNER,
+                    A.CITY_ID,
+                    A.STATUS,
+                    A.PROVIDER,
+                    DATE_FORMAT(A.SERVICE_END_DATE, '%Y-%m-%d') as SERVICE_END_DATE
+                from
+                    T_TERMINAL A
+                where
+                    A.TERMINAL_SERIAL_NO = :terminalSerialNo
+              <[ or A.TERMINAL_NAME = :terminalName ]>
+                limit 1
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- Load terminal Configure -->
+<bean id="sql_portal_loadTerminalConfigs" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    TERMINAL_SERIAL_NO,
+                    CONFIG_KEY,
+                    VALUE,
+                    STATUS,
+                    DATE_FORMAT(UPD_TIME, '%Y-%m-%d %T') as UPD_TIME
+                from
+                    T_TERMINAL_CONFIG
+                where
+                    TERMINAL_SERIAL_NO = :terminalSerialNo
+             <[ and CONFIG_KEY = :configKey ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- update terminal Configure -->
+<bean id="sql_portal_updateTerminalConfig" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                update
+                    T_TERMINAL_CONFIG
+                 set
+                 <[ VALUE=:value, ]>
+                 <[ STATUS=:status, ]>
+                    UPD_TIME=:updTime
+                where
+                    TERMINAL_SERIAL_NO = :terminalSerialNo
+                and CONFIG_KEY = :configKey
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- query terminal configuration By Key -->
+<bean id="sql_gateway_queryTerminalConfigByKeys" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    TERMINAL_SERIAL_NO,
+                    CONFIG_KEY,
+                    VALUE,
+                    STATUS,
+                    DATE_FORMAT(UPD_TIME, '%Y-%m-%d %T') as UPD_TIME
+                from T_TERMINAL_CONFIG
+                where
+                  (
+                  <[  CONFIG_KEY =:k1 ]>
+                  <[ or CONFIG_KEY =:k2 ]>
+                  <[ or CONFIG_KEY =:k3 ]>
+                  <[ or CONFIG_KEY =:k4 ]>
+                  <[ or CONFIG_KEY =:k5 ]>
+                  <[ or CONFIG_KEY =:k6 ]>
+                  <[ or CONFIG_KEY =:k7 ]>
+                  <[ or CONFIG_KEY =:k8 ]>
+                  <[ or CONFIG_KEY =:k9 ]>
+                  <[ or CONFIG_KEY =:k10 ]>
+                  <[ or CONFIG_KEY =:k11 ]>
+                  <[ or CONFIG_KEY =:k12 ]>
+                  <[ or CONFIG_KEY =:k13 ]>
+                  <[ or CONFIG_KEY =:k14 ]>
+                  <[ or CONFIG_KEY =:k15 ]>
+                  <[ or CONFIG_KEY =:k16 ]>
+                  <[ or CONFIG_KEY =:k17 ]>
+                  <[ or CONFIG_KEY =:k18 ]>
+                  <[ or CONFIG_KEY =:k19 ]>
+                  <[ or CONFIG_KEY =:k20 ]>
+                  <[ or CONFIG_KEY =:k21 ]>
+                  <[ or CONFIG_KEY =:k22 ]>
+                  <[ or CONFIG_KEY =:k23 ]>
+                  <[ or CONFIG_KEY =:k24 ]>
+                  <[ or CONFIG_KEY =:k25 ]>
+                  <[ or CONFIG_KEY =:k26 ]>
+                  <[ or CONFIG_KEY =:k27 ]>
+                  <[ or CONFIG_KEY =:k28 ]>
+                  <[ or CONFIG_KEY =:k29 ]>
+                  <[ or CONFIG_KEY =:k30 ]>
+                  <[ or CONFIG_KEY =:k31 ]>
+                  <[ or CONFIG_KEY =:k32 ]>
+                  <[ or CONFIG_KEY =:k33 ]>
+                  <[ or CONFIG_KEY =:k34 ]>
+                  <[ or CONFIG_KEY =:k35 ]>
+                  <[ or CONFIG_KEY =:k36 ]>
+                  <[ or CONFIG_KEY =:k37 ]>
+                  <[ or CONFIG_KEY =:k38 ]>
+              	  <[ or CONFIG_KEY =:k39 ]>      
+                  <[ or CONFIG_KEY =:k40 ]>
+                  <[ or CONFIG_KEY =:k41 ]>
+                  <[ or CONFIG_KEY =:k42 ]>
+              	  <[ or CONFIG_KEY =:k43 ]>   
+              	  <[ or CONFIG_KEY =:k44 ]>     
+              	  <[ or CONFIG_KEY =:k45 ]>    
+              	  <[ or CONFIG_KEY =:k46 ]>     
+              	  <[ or CONFIG_KEY =:k47 ]>        
+              	  <[ or CONFIG_KEY =:k48 ]>    
+              	  <[ or CONFIG_KEY =:k49 ]>    
+              	  <[ or CONFIG_KEY =:k50 ]>    
+              	  <[ or CONFIG_KEY =:k51 ]>                  	                	                	                	            	   
+                  )
+                 and TERMINAL_SERIAL_NO =:terminalSerialNo
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+
+<!-- Query Feedback list -->
+<bean id="sql_manager_queryFeedbackList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select
+                    A.ID,
+                    A.MOBILE,
+                    A.CLIENT_TYPE,
+                    A.VER,
+                    A.CONTENT,
+                    A.EXT_FIELD1,
+                    A.EXT_FIELD2,
+                    DATE_FORMAT(A.CREATE_DATE, '%Y-%m-%d %T') as CREATE_DATE,
+                    B.CLIENT_TYPE_NAME
+                from
+                    T_APP_FEEDBACK A,
+                    T_APP_SOFTWARE B
+                where
+                      A.CLIENT_TYPE = B.CLIENT_TYPE
+               <[ and A.MOBILE =:mobile ]>
+               <[ and A.CLIENT_TYPE =:clientType ]>
+               <[ and A.VER =:ver ]>
+               <[ and CREATE_DATE >= :createDateSt ]>
+			   <[ and CREATE_DATE <= :createDateEt ]>
+                order by A.CREATE_DATE desc
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- Query inbound terminals -->
+<bean id="sql_portal_queryInBoundTerminals" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                select distinct
+                    B.TERMINAL_SERIAL_NO,
+                    C.LNG,
+                    C.LAT,
+                    D.TERMINAL_NAME,
+                    POW((C.LNG - :cLng), 2) + POW((C.LAT - :cLat), 2) distance
+                from
+                    T_ORG_TMN_RL A,
+     				T_TERMINAL_CONFIG B,
+     				T_TERMINAL_LATESTLOC C,
+     				T_TERMINAL D
+                where
+				    C.TERMINAL_SERIAL_NO = A.TERMINAL_SERIAL_NO
+				and A.TERMINAL_SERIAL_NO = B.TERMINAL_SERIAL_NO
+				and B.TERMINAL_SERIAL_NO = D.TERMINAL_SERIAL_NO
+				and A.ORG_ID like :orgId
+				and B.CONFIG_KEY = :login_status_key
+				and B.VALUE = :onlineStatus
+				and C.LNG < :rightTopLng
+				and C.LAT < :rightTopLat
+				and C.LNG > :leftBottomLng
+				and C.LAT > :leftBottomLat
+				order by distance
+				limit 300
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+</beans>

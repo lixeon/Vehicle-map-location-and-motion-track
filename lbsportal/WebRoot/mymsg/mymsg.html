@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<!--
+  * Please see the included README.md file for license terms and conditions.
+  -->
+<head>
+    <title>我的消息</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+
+    <!-- see http://webdesign.tutsplus.com/tutorials/htmlcss-tutorials/quick-tip-dont-forget-the-viewport-meta-tag -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        /* following two viewport lines are equivalent to the meta viewport statement above, needed for Windows */
+        /* see http://www.quirksmode.org/blog/archives/2014/05/html5_dev_conf.html and http://dev.w3.org/csswg/css-device-adapt/ */
+        @-ms-viewport { width: 100vw ; zoom: 100% ; }  @viewport { width: 100vw ; zoom: 100% ; }
+        @-ms-viewport { user-zoom: fixed ; }           @viewport { user-zoom: fixed ; }
+    </style>
+
+    
+    <script src="js/app.js" tppabs="http://www.beidouguard.com:6010/mymsg/js/app.js"></script>           <!-- recommended location of your JavaScript code relative to other JS files -->
+    <script src="xdk/init-dev.js" tppabs="http://www.beidouguard.com:6010/mymsg/xdk/init-dev.js"></script>     <!-- normalizes device and document ready events, see README for details -->
+    
+    <script src="vendor/jquery/jquery-1.11.3.min.js" tppabs="http://www.beidouguard.com:6010/mymsg/vendor/jquery/jquery-1.11.3.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/bootstrap-3.3.6-dist/css/bootstrap.min.css" tppabs="http://www.beidouguard.com:6010/mymsg/vendor/bootstrap/bootstrap-3.3.6-dist/css/bootstrap.min.css" />  
+    <script src="vendor/bootstrap/bootstrap-3.3.6-dist/js/bootstrap.min.js" tppabs="http://www.beidouguard.com:6010/mymsg/vendor/bootstrap/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+    
+    
+    <link rel="stylesheet" type="text/css" href="css/app.css" tppabs="http://www.beidouguard.com:6010/mymsg/css/app.css" />    
+    <script src="js/base.js" tppabs="http://www.beidouguard.com:6010/mymsg/js/base.js"></script>
+    <script src="js/mymsg.js" tppabs="http://www.beidouguard.com:6010/mymsg/js/mymsg.js"></script>
+    
+
+</head>
+
+<body>
+    
+    
+	<div class="bd-three">
+        <div class="lanrenzhijia">
+            <div class="tab">
+                <a href="javascript:;" class="on" id="btn_receivebox">收件箱</a>
+                <a href="javascript:;" id="btn_sendbox">发件箱</a>
+            </div>
+            <div id="rtnInfo">正在加载...</div>
+            <div class="content" id="receivebox" >
+                <ul id="receivemsg_list">
+                
+                </ul>
+            </div>
+            <div class="content" id="sendbox" style="display:none">
+                <ul id="sendmsg_list">
+                   
+                </ul>
+            </div>
+        </div>
+    </div>
+	
+	
+    
+    
+	
+	
+	
+</body>
+</html>

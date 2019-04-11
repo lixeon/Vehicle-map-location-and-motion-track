@@ -1,0 +1,148 @@
+/**
+ * Main
+ */
+(function() {
+
+	var icons={
+        zoom3_5: {//电动车3-5级地图
+			accon:{url:"images/L1_4x4_ACCOn_Online.png",sizex:4, sizey:4},
+			accoff:{ImgUrl:"images/L1_4x4_ACCOff_Online.png",sizex:4, sizey:4}, 
+			move:{ImgUrl:"images/L1_4x4_ACCOff_Online.png",sizex:4, sizey:4}, 
+			offline:{ImgUrl:"images/L1_4x4_ACCOn_Online.png",sizex:4, sizey:4},
+			alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        Pzoom3_5: {//人3-5级地图
+			accon:{ImgUrl:"images/P_4x4_Online.png",sizex:4, sizey:4},
+			accoff:{ImgUrl:"images/P_4x4_Online.png"sizex:4, sizey:4}, 
+			move:{ImgUrl:"images/P_4x4_Online.png"sizex:4, sizey:4}, 
+			offline:{ImgUrl:"images/P_4x4_Offline.png",sizex:4, sizey:4},
+			alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        Czoom3_5: {//小汽车3-5级地图
+			accon:{ImgUrl:"images/C_4x4_ACCOn_Online.png",sizex:4, sizey:4},
+			accoff:{ImgUrl:"images/C_4x4_ACCOff_Online.png",sizex:4, sizey:4}, 
+			move:{ImgUrl:"images/C_4x4_ACCOff_Online.png",sizex:4, sizey:4}, 
+			offline:{ImgUrl:"images/C_4x4_ACCOff_Offline.png",sizex:4, sizey:4},
+			alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        zoom6_11: {//电动车6-11级地图
+            accon:{ImgUrl:"images/L2_16x16_ACCOn_Online.png",sizex:16, sizey:16},
+            accoff:{ImgUrl:"images/L2_16x16_ACCOff_Online.png",sizex:16, sizey:16}, 
+            move:{ImgUrl:"images/L2_16x16_ACCOff_Online.png",sizex:16, sizey:16}, 
+            offline:{ImgUrl:"images/L2_16x16_ACCOff_Offline.png",sizex:16, sizey:16},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        Pzoom6_11: {//人员6-11级地图
+        
+            accon:{ImgUrl:"images/P_16x16_Online.png",sizex:16, sizey:16},
+            accoff:{ImgUrl:"images/P_16x16_Online.png",sizex:16, sizey:16}, 
+            move:{ImgUrl:"images/P_16x16_Online.png",sizex:16, sizey:16}, 
+            offline:{ImgUrl:"images/P_16x16_Offline.png",sizex:16, sizey:16},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        Czoom6_11: {//小汽车6-11级地图
+            accon:{ImgUrl:"images/C_16x16_ACCOn_Online.png",sizex:16, sizey:16},
+            accoff:{ImgUrl:"images/C_16x16_ACCOff_Online.png",sizex:16, sizey:16}, 
+            move:{ImgUrl:"images/C_16x16_ACCOff_Online.png",sizex:16, sizey:16}, 
+            offline:{ImgUrl:"images/C_16x16_ACCOff_Offline.png",sizex:16, sizey:16},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        zoom12_18: {//电动车12-18级地图
+            accon:{ImgUrl:"images/L3_32x32_ACCOn_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/L3_32x32_ACCOff_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/L3_32x32_ACCOff_Online.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/L3_32x32_ACCOff_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        Motorzoom12_18: {//摩托车12-18级地图
+            accon:{ImgUrl:"images/Motor_32x32_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/Motor_32x32_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/Motor_32x32_Online2.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/Motor_32x32_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+
+        },
+        Pzoom12_18: {//人员12-18级地图
+            accon:{ImgUrl:"images/P_32x32_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/P_32x32_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/P_32x32_Online2.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/P_32x32_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+            
+        },
+        Czoom12_18: {//小汽车12-18级地图
+            accon:{ImgUrl:"images/C_32x32_ACCOff_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/C_32x32_ACCOff_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/C_32x32_ACCOn_Online.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/C_32x32_ACCOff_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        HCzoom12_18: {//货车12-18级地图
+            accon:{ImgUrl:"images/G1.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/G1.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/Y1.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/R1.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+        },
+        JCzoom12_18: {//警车12-18级地图
+            accon:{ImgUrl:"images/JC_32x32_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/JC_32x32_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/JC_32x32_Online2.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/JC_32x32_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+
+        },
+        TLJzoom12_18: {//拖拉机12-18级地图
+            accon:{ImgUrl:"images/TLJ_32x32_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/TLJ_32x32_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/TLJ_32x32_Online2.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/TLJ_32x32_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+            
+        },
+        WJJzoom12_18: {//挖掘机车12-18级地图
+            accon:{ImgUrl:"images/WJJ_32x32_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/WJJ_32x32_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/WJJ_32x32_Online2.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/WJJ_32x32_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+
+        },
+        SGJzoom12_18: {//收割机车12-18级地图
+        
+            accon:{ImgUrl:"images/SGJ_32x32_Online.png",sizex:32, sizey:32},
+            accoff:{ImgUrl:"images/SGJ_32x32_Online.png",sizex:32, sizey:32}, 
+            move:{ImgUrl:"images/SGJ_32x32_Onlin2.png",sizex:32, sizey:32}, 
+            offline:{ImgUrl:"images/SGJ_32x32_Offline.png",sizex:32, sizey:32},
+            alarm:{ImgUrl:"images/alarm.gif",sizex:30, sizey:24}
+         }
+    };
+    
+    //根据zoom获取对应的icon
+    getCurrentIcons: function (zoom, type) {
+        var icons = null;
+        {
+            if ('1' == type) {
+                icons = this.icons.Motorzoom12_18;
+            } else if ('2' == type) {
+                icons = this.icons.zoom12_18;
+            } else if ('3' == type) {
+                icons = this.icons.Czoom12_18;
+            } else if ('4' == type) {
+                icons = this.icons.HCzoom12_18;
+            } else if ('5' == type) {
+                icons = this.icons.JCzoom12_18;
+            } else if ('6' == type) {
+                icons = this.icons.WJJzoom12_18;
+            } else if ('7' == type) {
+                icons = this.icons.TLJzoom12_18;
+            } else if ('8' == type) {
+                icons = this.icons.SGJzoom12_18;
+            } else {
+                icons = this.icons.Pzoom12_18;
+            }
+        }
+        return icons;
+    };
+	
+})();

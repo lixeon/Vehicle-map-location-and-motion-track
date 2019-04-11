@@ -1,0 +1,1 @@
+(function(){var a=function(d){var b=function(e){vp.v.log.info("操作成功！")};var c=function(h){var f=$.parseJSON(h);var g="";for(var e=0;e<f.errorMsgs.length;e++){g+=f.errorMsgs[e]+"\n"}vp.v.log.error(g);alert(g)};lbs.common.ajax("portal/send_protected_cmd.shtm",{terminalId:vp.v.cur_terminal.terminal_serial_no,offon:d},b,c)};vp.page.ptsts={};vp.page.ptsts.set=a})();

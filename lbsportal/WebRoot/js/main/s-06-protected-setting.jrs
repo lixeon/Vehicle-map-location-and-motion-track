@@ -1,0 +1,32 @@
+// ACC Setting
+(function() {
+
+    var _set_protected = function(offon) {
+        
+        var cb = function(text) {
+            vp.v.log.info("操作成功！");
+        };
+        
+        var err_cb = function(text) {
+            var json = $.parseJSON(text);
+            var msgs = '';
+            for (var i = 0; i < json.errorMsgs.length; i++) {
+                msgs += json.errorMsgs[i] + '\n';
+            }
+            
+            // print message
+            vp.v.log.error(msgs);
+            
+            alert(msgs);
+        };
+
+        lbs.common.ajax("portal/send_protected_cmd.shtm", {
+            terminalId: vp.v.cur_terminal.terminal_serial_no,
+            offon : offon
+        }, cb, err_cb);  
+    };
+
+    // export
+    vp.page.ptsts = {};
+    vp.page.ptsts.set = _set_protected;
+})();

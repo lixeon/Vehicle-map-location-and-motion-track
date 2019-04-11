@@ -1,0 +1,206 @@
+﻿
+<!DOCTYPE html>
+<html>
+<head>
+<title>位置服务平台</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico" />
+<style type="text/css">
+body {
+    background-color: #ffffff;
+}
+
+.login {
+    width: 800px;
+    height: 600px;
+    position: relative;
+    margin: 0 auto;
+    top: 50px;
+    background: url("images/lonher/bg.png") no-repeat;
+}
+.logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 280px;
+    height: 180px;
+    border: none;
+    background:url("images/lonher/logo.png") no-repeat;
+}
+
+.userName,.psw {
+    width: 155px;
+    height: 19px;
+    border-radius: 3px;
+    border: solid 1px #0b4aab;
+    position: absolute;
+    left: 430px;
+    top: 296px;
+    outline: none;
+    padding: 2px 5px;
+}
+
+.psw {
+    top: 334px;
+}
+
+.submit,.reset {
+	position: absolute;
+	top: 406px;
+	left: 430px;
+	width: 76px;
+	height: 28px;
+	border: none;
+	background: url("images/lonher/login.png") no-repeat;
+	cursor: pointer;
+	outline: none;
+}
+
+.reset {
+    width: 76px;
+    background: url("images/lonher/reset.png") no-repeat;
+    left: 517px;
+}
+
+.bah {
+	position: absolute;
+	font-size: 12px;
+	left: 343px;
+	top: 381px;
+	text-decoration: none;
+	color: #fff;
+}
+
+.cverifycode {
+    width: 65px;
+    height: 19px;
+    border-radius: 3px;
+    border: solid 1px #0b4aab;
+    position: absolute;
+    left: 430px;
+    top: 372px;
+    outline: none;
+    padding: 2px 5px;
+}
+.cverifyimage {
+	position: absolute;
+	top: 372px;
+	left: 522px;
+	width: 70px;
+	height: 24px;
+    	border: solid 1px #0b4aab;
+	background: url("images/image.jsp");
+	title="换一张试试";	
+	cursor: pointer;
+	outline: none;
+}
+
+</style>
+</head>
+<body>
+<div class="login" >
+       <div class="logo" border:none></div>
+        <form >
+            <input id="uid" name="uid" type="text" placeholder="终端ID或昵称" class="userName" >
+            <input id="password" name="password" type="password" placeholder="密码" class="psw">
+            <input id="btn_login" type="button" class="submit" >
+            <input id="btn_reset" type="button" class="reset" >
+            <input id="verifycode" name="verifycode" type="text" class="cverifycode" >
+            <img id="verifyimage"  name="verifyimage"  class="cverifyimage" border="none">
+        </form>
+    <!-- <a href="#" class="bah"> 备案号：苏ICP备12080268号</a>-->
+
+</div>
+</body>
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="assets/jqbootstrap/js/jquery-1.9.0.min.js" type="text/javascript"></script>
+<script src="js/lbs.abc.js" type="text/javascript"></script>
+<script src="js/lbs.consts.js" type="text/javascript"></script>
+<script src="js/lbs.common.js" type="text/javascript"></script>
+
+
+<!-- business code -->
+<script type="text/javascript">
+
+
+function loadimage(){
+	document.getElementById("verifyimage").src="images/image.jsp?"+Math.random();
+}
+// page index
+var p_index = {};
+
+// show error message box
+p_index.showError = function(msg) {
+    alert(msg);
+    loadimage();
+    //$("#msgbox").find("span").html(msg);
+	//$("#msgbox").show();
+};
+
+// do login
+p_index.doLogin = function() {
+    if (lbs.common.isTrimEmpty($("#uid").val())) {
+        p_index.showError("用户名不能为空！");
+        $("#uid").focus();
+        return;
+    }
+    if (lbs.common.isTrimEmpty($("#password").val())) {
+        p_index.showError("密码不能为空！");
+        $("#password").focus();
+        return;
+    }
+    if (lbs.common.isTrimEmpty($("#verifycode").val())) {
+        p_index.showError("验证码不能为空！");
+        $("#verifycode").focus();
+        return;
+    }
+
+    //$("#msgbox").hide();
+    
+    var cb = function(text) {
+        var json = $.parseJSON(text);
+        top.location = json.forward;
+    };
+    var err_cb = function(text) {
+        var json = $.parseJSON(text);
+        var msgs = '';
+        for (var i = 0; i < json.errorMsgs.length; i++) {
+            msgs += json.errorMsgs[i] + '\n';
+        }
+        p_index.showError(msgs);
+    };
+
+    // submit
+    lbs.common.ajax("portal/login.shtm?login_type=1", $("form:first").serialize(), cb, err_cb);
+    cb = null;
+    err_cb = null;
+};
+
+// page open, foucs
+$("#uid").focus();
+
+// login
+$("#btn_login").click(function() {
+    p_index.doLogin();
+});
+// password keyup
+$("#password").keyup(function(ev) {
+    if (ev.keyCode == 13) {
+        p_index.doLogin();
+    }
+});
+// reset
+$("#btn_reset").click(function() {
+    $("#uid,#password").val("");
+    $("#uid").focus();
+});
+
+$("#verifyimage").click(function() {
+	loadimage();
+});
+
+
+</script>
+
+</html>

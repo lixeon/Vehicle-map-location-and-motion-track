@@ -1,0 +1,15 @@
+// name space
+var vp = {};
+// constant
+vp.c = {};
+// global variable
+vp.v = {};
+// tools
+vp.t = {};
+// map
+vp.m = {};
+// task
+vp.task = {};
+// page
+vp.page = {};
+

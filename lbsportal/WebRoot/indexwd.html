@@ -1,0 +1,3185 @@
+
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>北斗卫士位置服务平台</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="Generator" content="EditPlus">
+    <meta name="Author" content="">
+    <meta name="Keywords" content="">
+    <meta name="Description" content="">
+    <link href='css/wd/index.css' rel="stylesheet" type="text/css">
+    <script src="js/lib/boot.js" type="text/javascript"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=928e0a4bccfc2ed444984db3851e29ab"></script>
+    <script type="text/javascript" src="http://api.map.baidu.com/library/DistanceTool/1.2/src/DistanceTool_min.js"></script>
+    <script type="text/javascript" src="http://api.tianditu.com/js/service.js"></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script src="js/lib/miniui/miniui.js" type="text/javascript"></script>
+    <script type="text/javascript" src="js/RectangleZoom.js"></script>
+    <script type="text/javascript" src="js/wd_index.js"></script>
+    <script type="text/javascript" src="js/DrawingManager.js"></script>
+    <script type="text/javascript" src="js/LuShu.js"></script>
+    <script type="text/javascript" src="js/TextIconOverlay.js"></script>
+    <script type="text/javascript" src="js/MarkerClusterer.js"></script>
+    <script type="text/javascript" src="js/GeoUtils.js"></script>
+    <script src="Precise/js/jquery.easyui.min.js" type="text/javascript"></script>
+    <script src="Precise/js/easyui-lang-zh_CN.js" type="text/javascript"></script>
+    <link href="Precise/themes/icon.css" rel="stylesheet" type="text/css" />
+    <link href="Precise/themes/bootstrap/easyui.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript">
+        window.areadatajson;
+        window.distancedatajson;
+        window.onlinetimedatajson;
+        function getCookie(cookie_name) {
+            var allcookies = document.cookie;
+            var cookie_pos = allcookies.indexOf(cookie_name); //索引的长度
+            // 如果找到了索引，就代表cookie存在，
+            // 反之，就说明不存在。
+            if (cookie_pos != -1) {
+                // 把cookie_pos放在值的开始，只要给值加1即可。
+                cookie_pos += cookie_name.length + 1;
+                var cookie_end = allcookies.indexOf(";", cookie_pos);
+                if (cookie_end == -1) {
+                    cookie_end = allcookies.length;
+                }
+                var value = unescape(allcookies.substring(cookie_pos, cookie_end)); //这里就可以得到cookie的值
+            }
+            return value;
+        };
+        $(function () {
+            //去掉默认的contextmenu事件，否则会和右键事件同时出现。
+            document.oncontextmenu = function (e) {
+                e.preventDefault();
+            };
+            $('#A5').hide();
+            $('#sA5').hide();
+            var grid = mini.get("targetgrid");
+            grid.hideColumn("v_name");
+            grid.hideColumn("v_platenumber");
+            var cook = getCookie("dependencyid");
+            if (cook == "1") {
+                $('#A5').show();
+                $('#sA5').show();
+            }
+            if (cook == "3") {
+                $('#A5').show();
+                $('#sA5').show();
+                grid.showColumn("v_name");
+            }
+            if (cook == "2") {
+                grid.showColumn("v_platenumber");
+            }
+            else {
+                grid.showColumn("v_name");
+            }
+        });
+        window.treeE = null;
+        function startUpload() {
+            //document.getElementById("btnOK").click();
+            var path = $('#excelFile').val();
+            var pos1 = path.lastIndexOf('/');
+            var pos2 = path.lastIndexOf('\\');
+            var pos = Math.max(pos1, pos2)
+            if (pos < 0)
+                path = path;
+            else
+                path = path.substring(pos + 1);
+            $.ajax({
+                url: 'actions/impot_vehicle_transfer.ashx?url=' + path,
+                type: 'GET',
+                async: false,
+                success: function (data) {
+                    if (data == "请选择文件") {
+                        alert("请上传文件");
+                    }
+                    else {
+                        var dataarr = data.split('@');
+                        if (dataarr[1] != "") {
+                            alert("终端" + dataarr[1] + "不在您的权限内，请核实！");
+                        }
+                        else {
+                            var arr = null;
+                            mini.get('dgimportvehicle').setData(arr);
+                            try { eval("arr=" + dataarr[0]) } catch (e) { }
+                            mini.get('dgimportvehicle').setData(arr);
+                        }
+                    }
+                }
+            });
+        };
+
+        function beforetreeNodeClick(e) {
+            treeE = e;
+        };
+        function confirmorg() {
+            var arr = null;
+            if (treeE == null) {
+                alert("请选择组织机构");
+                return;
+            }
+            else {
+                var record = window.treeE.record;
+                var id = record.id;
+                var allRows = mini.get('dgimportvehicle').getSelecteds();
+                for (var i = 0; i < allRows.length; i++) {
+                    arr = null;
+                    try { eval("arr=" + "{targetnumber:'" + allRows[i].targetnumber + "',oldorgname:'" + allRows[i].oldorgname + "',neworgname:'" + record.name.split('(')[0] + "',oldorgid:'" + allRows[i].oldorgid + "',neworgid:'" + id + "'}") } catch (e) { }
+                    mini.get('dgimportvehicle').updateRow(allRows[i], arr);
+                }
+            }
+        };
+        $(function () {
+            var count = 0;
+            $("#hiddenIFrame").load(function () {
+                if (count != 0) {
+                    startUpload();
+                }
+                count++;
+            });
+        });
+        function canelbatchvehicletransfer() {
+            var trackbackD = mini.get("batchvehicletransferDiv");
+            trackbackD.hide();
+        }
+
+
+
+        //在线时长统计
+        function onlinetimelengthload() {
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = year + "-" + month + "-" + day;
+            $('#txtonlinetimelengthstarttime1').datebox("setValue", trace_starttime);
+            $('#txtonlinetimelengthendtime1').datebox("setValue", trace_endtime);
+            //onlineTimeLengthbutton(trace_starttime, trace_endtime);
+        }
+        function onlineTimeLengthbutton(trace_starttime, trace_endtime) {
+            var num = $('#onlinetimecombo').combobox("getValue");
+            if (num == 666666) {
+                num = "";
+            }
+            if (trace_starttime.length == 0 || trace_endtime.length == 0) {
+                alert('请设置开始、结束时间!');
+                return;
+            }
+            var tree = $('#onlinetimetree').combotree('tree'); // 得到树对象 
+            var selected = tree.tree('getSelected'); // 得到选择的节点
+            var orgid = "";
+            var orgname = "";
+            if (selected != null) {
+                orgid = selected.id;
+                orgname = selected.text;
+            }
+            $.messager.progress({
+                title: '请等待',
+                msg: '数据准备中...',
+                text: '正在查询……'
+            });
+            $.ajax({
+                url: 'Precise/ashx/show_onlinetimelength.ashx',
+                type: 'GET',
+                data: { num: num, trace_starttime: trace_starttime, trace_endtime: trace_endtime, orgid: orgid, orgname: orgname },
+                error: function () { },
+                success: function (data) {
+                    $.messager.progress('close');
+                    if (data == '空' || data == null || data == '' || data.lendth <= 0) {
+                        alert("此终端没有位置点，不进行在线时长计算");
+                        return;
+                    }
+                    window.onlinetimedatajson = data;
+
+                    var arr = null;
+                    try { eval("arr=" + data) } catch (e) { }
+                    //mini.get('Div5').setData(arr);
+                    if (arr == null) {
+                        $("#gridonlineTimeLength").datagrid("loadData", { total: 0, rows: [] })
+                    }
+                    else {
+                        var start = 0;
+                        var end = 50;
+                        var pager = $("#gridonlineTimeLength").datagrid("getPager");
+                        $("#gridonlineTimeLength").datagrid("loadData", arr.slice(start, end));
+                        pager.pagination({
+                            total: arr.length,
+                            pageNumber: 1,
+                            pageSize: 50,
+                            pageList: [20, 50, 100],
+                            showRefresh: false,
+                            onSelectPage: function (pageNo, pageSize) {
+                                start = (pageNo - 1) * pageSize;
+                                end = start + pageSize;
+                                $("#gridonlineTimeLength").datagrid("loadData", arr.slice(start, end));
+                                pager.pagination('refresh', {
+                                    total: arr.length,
+                                    pageNumber: pageNo
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        //今天
+        function onlineTimeLengthtoday() {
+            $('#txtonlinetimestarttime').datebox("setValue", "");
+            $('#txtonlinetimeendtime').datebox("setValue", "");
+            $('#comboonlinetime').combobox("setValue", "");
+
+            var today = document.getElementById("onlineTimeLengthtoday");
+            today.style.color = "#1874CD";
+            var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+            customDiv.style.display = "none";
+
+            var custom = document.getElementById("onlineTimeLengthcustom");
+            custom.style.color = "Black";
+            var yesterday = document.getElementById("onlineTimeLengthyesterday");
+            yesterday.style.color = "Black";
+            var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+            var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = year + "-" + month + "-" + day; ;
+            onlineTimeLengthbutton(trace_starttime, trace_endtime);
+
+        }
+        //昨天
+        function onlineTimeLengthyesterday() {
+            $('#txtonlinetimestarttime').datebox("setValue", "");
+            $('#txtonlinetimeendtime').datebox("setValue", "");
+            $('#comboonlinetime').combobox("setValue", "");
+
+            var yesterday = document.getElementById("onlineTimeLengthyesterday");
+            yesterday.style.color = "#1874CD";
+            var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+            customDiv.style.display = "none";
+
+            var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+            var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+            var today = document.getElementById("onlineTimeLengthtoday");
+            today.style.color = "Black";
+            var custom = document.getElementById("onlineTimeLengthcustom");
+            custom.style.color = "Black";
+
+            var subtracter = 1;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = oldyear + "-" + oldmonth + "-" + oldday;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            onlineTimeLengthbutton(trace_starttime, trace_endtime);
+        }
+        //近七天
+        function onlineTimeLengthnearlySevenDays() {
+            $('#txtonlinetimestarttime').datebox("setValue", "");
+            $('#txtonlinetimeendtime').datebox("setValue", "");
+            $('#comboonlinetime').combobox("setValue", "");
+
+            var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+            nearlySevenDays.style.color = "#1874CD";
+            var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+            customDiv.style.display = "none";
+
+            var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+            var today = document.getElementById("onlineTimeLengthtoday");
+            today.style.color = "Black";
+            var custom = document.getElementById("onlineTimeLengthcustom");
+            custom.style.color = "Black";
+            var yesterday = document.getElementById("onlineTimeLengthyesterday");
+            yesterday.style.color = "Black";
+
+            var subtracter = 7;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            onlineTimeLengthbutton(trace_starttime, trace_endtime);
+        }
+        //近三十天
+        function onlineTimeLengthnearlyThirtyDays() {
+            $('#txtonlinetimestarttime').datebox("setValue", "");
+            $('#txtonlinetimeendtime').datebox("setValue", "");
+            $('#comboonlinetime').combobox("setValue", "");
+
+            var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+            nearlyThirtyDays.style.color = "#1874CD";
+            var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+            customDiv.style.display = "none";
+
+            var today = document.getElementById("onlineTimeLengthtoday");
+            today.style.color = "Black";
+            var custom = document.getElementById("onlineTimeLengthcustom");
+            custom.style.color = "Black";
+            var yesterday = document.getElementById("onlineTimeLengthyesterday");
+            yesterday.style.color = "Black";
+            var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+
+            var subtracter = 30;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            onlineTimeLengthbutton(trace_starttime, trace_endtime);
+        }
+        //自定义
+        function onlineTimeLengthCustom() {
+            var custom = document.getElementById("onlineTimeLengthcustom");
+            custom.style.color = "#1874CD";
+            var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+            customDiv.style.display = "";
+
+            var yesterday = document.getElementById("onlineTimeLengthyesterday");
+            yesterday.style.color = "Black";
+            var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+            var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+            var today = document.getElementById("onlineTimeLengthtoday");
+            today.style.color = "Black";
+
+        }
+        function onlineTimeLength() {
+            var trace_starttime = $('#txtonlinetimelengthstarttime1').datebox("getValue");
+            var trace_endtime = $('#txtonlinetimelengthendtime1').datebox("getValue");
+            onlineTimeLengthbutton(trace_starttime, trace_endtime);
+        }
+
+        //里程计算
+        function distanceload() {
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = year + "-" + month + "-" + day;
+            $('#txtdistancestarttime1').datebox("setValue", trace_starttime);
+            $('#txtdistanceendtime1').datebox("setValue", trace_endtime);
+            //distanceButton(trace_starttime, trace_endtime);
+        }
+
+        function distanceButton(trace_starttime, trace_endtime) {
+            var /*num = $('#spanNum').html()*/num = $('#diatancecombo').combobox("getValue");
+            if (num == 666666) {
+                num = "";
+            }
+            if (trace_starttime.length == 0 || trace_endtime.length == 0) {
+                alert('请设置开始、结束时间!');
+                return;
+            }
+            var tree = $('#distancetree').combotree('tree'); // 得到树对象 
+            var selected = tree.tree('getSelected'); // 得到选择的节点
+            var orgid = "";
+            var orgname = "";
+            if (selected != null) {
+                orgid = selected.id;
+                orgname = selected.text;
+            }
+            $.messager.progress({
+                title: '请等待',
+                msg: '数据准备中...',
+                text: '正在查询……'
+            });
+            $.ajax({
+                url: 'Precise/ashx/show_target_track.ashx?num=' + num + "&trace_starttime=" + trace_starttime + "&trace_endtime=" + trace_endtime + "&orgid=" + orgid + "&orgname=" + orgname,
+                type: 'GET',
+                error: function () { },
+                success: function (data) {
+                    $.messager.progress('close');
+                    if (data == '空' || data == null || data == '' || data.lendth <= 0) {
+                        alert("此终端没有位置点，不进行里程计算");
+                        return;
+                    }
+                    window.distancedatajson = data;
+
+                    var arr = null;
+                    try { eval("arr=" + data) } catch (e) { }
+                    //mini.get('Div5').setData(arr);
+                    if (arr == null) {
+                        $("#griddistance").datagrid("loadData", { total: 0, rows: [] })
+                    }
+                    else {
+                        var start = 0;
+                        var end = 50;
+                        var pager = $("#griddistance").datagrid("getPager");
+                        $("#griddistance").datagrid("loadData", arr.slice(start, end));
+                        pager.pagination({
+                            total: arr.length,
+                            pageNumber: 1,
+                            pageSize: 50,
+                            pageList: [20, 50, 100],
+                            showRefresh: false,
+                            onSelectPage: function (pageNo, pageSize) {
+                                start = (pageNo - 1) * pageSize;
+                                end = start + pageSize;
+                                $("#griddistance").datagrid("loadData", arr.slice(start, end));
+                                pager.pagination('refresh', {
+                                    total: arr.length,
+                                    pageNumber: pageNo
+                                });
+                            }
+                        });
+                    }
+                }
+            });
+        }
+        function _getLoop(v, a, b) {
+            while (v > b) {
+                v -= b - a
+            }
+            while (v < a) {
+                v += b - a
+            }
+            return v;
+        }
+        function degreeToRad(degree) {
+            return Math.PI * degree / 180;
+        }
+        function radToDegree(rad) {
+            return (180 * rad) / Math.PI;
+        }
+        function _getRange(v, a, b) {
+            if (a != null) {
+                v = Math.max(v, a);
+            }
+            if (b != null) {
+                v = Math.min(v, b);
+            }
+            return v;
+        }
+        function today() {
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#diatancecombo').combobox("setValue", "");
+
+            var today = document.getElementById("today");
+            today.style.color = "#1874CD";
+            var customDiv = document.getElementById("customDiv");
+            customDiv.style.display = "none";
+
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+            var yesterday = document.getElementById("yesterday");
+            yesterday.style.color = "Black";
+            var nearlySevenDays = document.getElementById("nearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+            var nearlyThirtyDays = document.getElementById("nearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = year + "-" + month + "-" + day; ;
+            distanceButton(trace_starttime, trace_endtime);
+
+        }
+        function yesterday() {
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#diatancecombo').combobox("setValue", "");
+
+            var yesterday = document.getElementById("yesterday");
+            yesterday.style.color = "#1874CD";
+            var customDiv = document.getElementById("customDiv");
+            customDiv.style.display = "none";
+
+            var nearlySevenDays = document.getElementById("nearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+            var nearlyThirtyDays = document.getElementById("nearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+            var today = document.getElementById("today");
+            today.style.color = "Black";
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+
+            var subtracter = 1;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = oldyear + "-" + oldmonth + "-" + oldday;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            distanceButton(trace_starttime, trace_endtime);
+        }
+        function nearlySevenDays() {
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#diatancecombo').combobox("setValue", "");
+
+            var nearlySevenDays = document.getElementById("nearlySevenDays");
+            nearlySevenDays.style.color = "#1874CD";
+            var customDiv = document.getElementById("customDiv");
+            customDiv.style.display = "none";
+
+            var nearlyThirtyDays = document.getElementById("nearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+            var today = document.getElementById("today");
+            today.style.color = "Black";
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+            var yesterday = document.getElementById("yesterday");
+            yesterday.style.color = "Black";
+
+            var subtracter = 7;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            distanceButton(trace_starttime, trace_endtime);
+        }
+        function nearlyThirtyDays() {
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#txtdistanceendtime1').datebox("setValue", "");
+            $('#diatancecombo').combobox("setValue", "");
+
+            var nearlyThirtyDays = document.getElementById("nearlyThirtyDays");
+            nearlyThirtyDays.style.color = "#1874CD";
+            var customDiv = document.getElementById("customDiv");
+            customDiv.style.display = "none";
+
+            var today = document.getElementById("today");
+            today.style.color = "Black";
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+            var yesterday = document.getElementById("yesterday");
+            yesterday.style.color = "Black";
+            var nearlySevenDays = document.getElementById("nearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+
+            var subtracter = 30;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            distanceButton(trace_starttime, trace_endtime);
+        }
+        function customdistance() {
+            var custom = document.getElementById("custom");
+            custom.style.color = "#1874CD";
+            var customDiv = document.getElementById("customDiv");
+            customDiv.style.display = "";
+
+            var yesterday = document.getElementById("yesterday");
+            yesterday.style.color = "Black";
+            var nearlySevenDays = document.getElementById("nearlySevenDays");
+            nearlySevenDays.style.color = "Black";
+            var nearlyThirtyDays = document.getElementById("nearlyThirtyDays");
+            nearlyThirtyDays.style.color = "Black";
+            var today = document.getElementById("today");
+            today.style.color = "Black";
+
+        }
+        function distanceB() {
+            var trace_starttime = $('#txtdistancestarttime1').datebox("getValue");
+            var trace_endtime = $('#txtdistanceendtime1').datebox("getValue");
+
+            distanceButton(trace_starttime, trace_endtime);
+        }
+
+        //面积测量
+        function areaButton(trace_starttime, trace_endtime) {
+            var /*num = $('#spanNum').html()*/num = $('#areacombo').combobox("getValue");
+
+            if (trace_starttime.length == 0 || trace_endtime.length == 0) {
+                alert('请设置开始、结束时间!');
+                return;
+            }
+            $.ajax({
+                url: 'Precise/ashx/show_area_position.ashx?num=' + num + "&trace_starttime=" + trace_starttime + "&trace_endtime=" + trace_endtime,
+                type: 'GET',
+                error: function () { },
+                success: function (data) {
+                    if (data == '空' || data == null || data == '' || data.lendth <= 0) {
+                        alert("此终端没有位置点，不进行面积测量");
+                        return;
+                    }
+                    var sb = "[";
+                    var strRet = "";
+                    var arr = [];
+                    arr = data.split(',');
+                    var arrdistinct = [];
+                    var count = 0;
+                    var distance = 0;
+                    var arrareapoint = [];
+                    var array = new Array();
+                    var arraynumber = new Array();
+                    var arrayname = new Array();
+                    var noarr = new Array();
+                    var arrcount = new Array();
+                    if ((arr.length / 7) <= 2) {
+                        noarr[arr[7 * 0 + 2]] = arr[7 * 0 + 5] + "," + arr[7 * 0 + 6];
+                        noarr[arr[7 * 1 + 2]] = arr[7 * 1 + 5] + "," + arr[7 * 1 + 6];
+                    }
+                    else {
+                        for (var i = 0; i < arr.length / 7; i++) {
+                            if (i > 0 && arr[7 * i + 2] != arr[7 * (i - 1) + 2]) {
+                                if (arrcount[arr[7 * (i - 1) + 2]] != 2) {
+                                    noarr[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 5] + "," + arr[7 * (i - 1) + 6];
+                                }
+                                if (i == arr.length / 7 - 1) {
+                                    noarr[arr[7 * i + 2]] = arr[7 * i + 5] + "," + arr[7 * i + 6];
+                                }
+                                arrdistinct = [];
+                                count = -1;
+                                distance = 0;
+                                arrareapoint = [];
+                                arrcount = [];
+                            }
+                            else {
+                                if (i == arr.length / 7 - 1) {
+                                    if (i == 0) {
+                                        noarr[arr[7 * i + 2]] = arr[7 * i + 5] + "," + arr[7 * i + 6];
+                                    }
+                                    arrdistinct = [];
+                                    count = -1;
+                                    distance = 0;
+                                    arrareapoint = [];
+                                }
+                                else {
+                                    if (count == 0) {
+                                        arrdistinct[2 * count] = arr[7 * i];
+                                        arrdistinct[2 * count + 1] = arr[7 * i + 1];
+                                    }
+                                    else {
+                                        if ((arr[7 * i + 3] - arr[7 * (i - 1) + 3]) < 300 && arr[7 * i + 4] >= 0 && arr[7 * i + 4] < 800) {
+                                            arrdistinct[2 * count] = arr[7 * i];
+                                            arrdistinct[2 * count + 1] = arr[7 * i + 1];
+                                        }
+                                        else {
+                                            if (arrdistinct.length > 62) {
+                                                arrcount[arr[7 * i + 2]] = 2;
+                                                for (var t = 0; t < arrdistinct.length / 2; t++) {
+                                                    if (t == 0) {
+                                                        arrareapoint[t] = arrdistinct[t];
+                                                        arrareapoint[t + 1] = arrdistinct[t + 1];
+                                                        arrareapoint[t + 2] = arrdistinct[t];
+                                                        arrareapoint[t + 3] = arrdistinct[t + 1];
+                                                        arrareapoint[t + 4] = arrdistinct[t];
+                                                        arrareapoint[t + 5] = arrdistinct[t + 1];
+                                                        arrareapoint[t + 6] = arrdistinct[t];
+                                                        arrareapoint[t + 7] = arrdistinct[t + 1];
+                                                    }
+                                                    else {
+                                                        if (arrdistinct[2 * t + 1] > arrareapoint[1]) {
+                                                            arrareapoint[0] = arrdistinct[2 * t];
+                                                            arrareapoint[1] = arrdistinct[2 * t + 1];
+                                                        }
+                                                        if (arrdistinct[2 * t] > arrareapoint[2]) {
+                                                            arrareapoint[2] = arrdistinct[2 * t];
+                                                            arrareapoint[3] = arrdistinct[2 * t + 1];
+                                                        }
+                                                        if (arrdistinct[2 * t + 1] < arrareapoint[5]) {
+                                                            arrareapoint[4] = arrdistinct[2 * t];
+                                                            arrareapoint[5] = arrdistinct[2 * t + 1];
+                                                        }
+                                                        if (arrdistinct[2 * t] < arrareapoint[6]) {
+                                                            arrareapoint[6] = arrdistinct[2 * t];
+                                                            arrareapoint[7] = arrdistinct[2 * t + 1];
+                                                        }
+                                                    }
+                                                }
+                                                var nCount = arrareapoint.length / 2;
+                                                for (var k = 0; k < arrdistinct.length / 2; k++) {
+                                                    var x = arrdistinct[2 * k];
+                                                    var y = arrdistinct[2 * k + 1];
+
+                                                    var r;
+                                                    var j = nCount - 1;
+                                                    var oddNodes = false;
+
+                                                    for (r = 0; r < nCount; r++) {
+                                                        if ((arrareapoint[2 * r + 1] <= y && arrareapoint[2 * j + 1] >= y || arrareapoint[2 * j + 1] <= y && arrareapoint[2 * r + 1] >= y) && (arrareapoint[2 * r] <= x || arrareapoint[2 * j] <= x)) {
+                                                            oddNodes ^= (arrareapoint[2 * r] + (y - arrareapoint[2 * r + 1]) / (arrareapoint[2 * j + 1] - arrareapoint[2 * r + 1]) * (arrareapoint[2 * j] - arrareapoint[2 * r]) < x);
+                                                        }
+                                                        j = r;
+                                                    }
+
+                                                    if (oddNodes == false) {
+                                                        for (var q = 0; q < arrareapoint.length / 2; q++) {
+                                                            if (q == arrareapoint.length / 2 - 1) {
+                                                                if (arrdistinct[2 * k + 1] < arrareapoint[1] && arrdistinct[2 * k + 1] > arrareapoint[2 * q + 1] && arrdistinct[2 * k] > arrareapoint[2 * q] && arrdistinct[2 * k] < arrareapoint[0]) {
+                                                                    arrareapoint[arrareapoint.length] = arrdistinct[2 * k];
+                                                                    arrareapoint[arrareapoint.length + 1] = arrdistinct[2 * k + 1];
+                                                                }
+                                                            }
+                                                            else {
+                                                                if (arrdistinct[2 * k + 1] < arrareapoint[2 * q + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k] > arrareapoint[2 * q] && arrdistinct[2 * k] < arrareapoint[2 * (q + 1)] || arrdistinct[2 * k + 1] < arrareapoint[2 * q + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k] > arrareapoint[2 * (q + 1)] && arrdistinct[2 * k] < arrareapoint[2 * q] || arrdistinct[2 * k + 1] < arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * q + 1] && arrdistinct[2 * k] > arrareapoint[2 * (q + 1)] && arrdistinct[2 * k] < arrareapoint[2 * q] || arrdistinct[2 * k + 1] < arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * q + 1] && arrdistinct[2 * k] > arrareapoint[2 * q] && arrdistinct[2 * k] < arrareapoint[2 * (q + 1)]) {
+                                                                    for (var w = arrareapoint.length / 2; w > q + 1; w--) {
+                                                                        arrareapoint[2 * w] = arrareapoint[2 * w - 2];
+                                                                        arrareapoint[2 * w + 1] = arrareapoint[2 * w - 1];
+                                                                    }
+                                                                    arrareapoint[2 * (q + 1)] = arrdistinct[2 * k];
+                                                                    arrareapoint[2 * (q + 1) + 1] = arrdistinct[2 * k + 1];
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                for (var n = 0; n < arrareapoint.length / 2; n++) {
+                                                    if (isNaN(arrareapoint[2 * n])) {
+                                                        arrareapoint.remove(arrareapoint[2 * n]);
+                                                    }
+                                                    if (isNaN(arrareapoint[2 * n + 1])) {
+                                                        arrareapoint.remove(arrareapoint[2 * n + 1]);
+                                                    }
+                                                }
+                                                for (var u = 0; u < arrareapoint.length / 2; u++) {
+                                                    for (var o = u + 1; o < arrareapoint.length / 2; o++) {
+                                                        if (arrareapoint[2 * u] == arrareapoint[2 * o] && arrareapoint[2 * u + 1] == arrareapoint[2 * o + 1]) {
+                                                            arrareapoint.remove(arrareapoint[2 * o + 1]);
+                                                            arrareapoint.remove(arrareapoint[2 * o]);
+                                                        }
+                                                    }
+                                                }
+                                                for (var h = 0; h < arrareapoint.length / 2; h++) {
+                                                    arrareapoint[h] = arrareapoint[2 * h] + "," + arrareapoint[2 * h + 1];
+                                                }
+                                                var numcc = arrareapoint.length / 2;
+                                                for (var g = arrareapoint.length - 1; g >= numcc; g--) {
+                                                    arrareapoint.remove(arrareapoint[g]);
+                                                }
+                                                distance = getPolygonArea(arrareapoint);
+                                                if (distance != 0) {
+                                                    distance = distance + ".000";
+                                                    distance = distance.toString().split('.')[0] + '.' + distance.toString().split('.')[1].substring(0, 3);
+                                                }
+                                                if (array[arr[7 * (i - 1) + 2]] != null && array[arr[7 * (i - 1) + 2]] != 0 && array[arr[7 * (i - 1) + 2]] != "") {
+                                                    array[arr[7 * (i - 1) + 2]] = Number(array[arr[7 * (i - 1) + 2]]) + Number(distance);
+                                                }
+                                                else {
+                                                    if (distance == 0) {
+                                                        noarr[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 5] + "," + arr[7 * (i - 1) + 6];
+                                                        //noarr[arr[7 * (i - 1) + 2]] = Number(distance);
+                                                    }
+                                                    else {
+                                                        array[arr[7 * (i - 1) + 2]] = Number(distance);
+                                                        arraynumber[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 6];
+                                                        arrayname[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 5];
+                                                    }
+                                                }
+                                            }
+                                            else {
+                                                noarr[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 5] + "," + arr[7 * (i - 1) + 6];
+                                            }
+                                            arrdistinct = [];
+                                            count = -1;
+                                            distance = 0;
+                                            arrareapoint = [];
+                                        }
+                                    }
+                                }
+                            }
+                            count++;
+                        }
+                    }
+                    var totalarea = 0;
+                    for (var item in array) {
+                        if (!isNaN(Number(item.substring(0, 8)))) {
+                            if (trace_starttime == trace_endtime) {
+                                sb += "{'time':'" + trace_starttime + "','targetnumber':'" + item + "','area':'" + array[item] * 0.0015 + "','carownername':'" + arrayname[item].toString() + "','carplatenumber':'" + arraynumber[item].toString() + "'},";
+                            }
+                            else {
+                                sb += "{'time':'" + trace_starttime + "至" + trace_endtime + "','targetnumber':'" + item + "','area':'" + array[item] * 0.0015 + "','carownername':'" + arrayname[item].toString() + "','carplatenumber':'" + arraynumber[item].toString() + "'},";
+                            }
+                            totalarea += array[item] * 0.0015;
+                        }
+                    }
+                    if (sb == "[") {
+                        if (trace_starttime == trace_endtime) {
+                            sb = "[{'time':'" + trace_starttime + "','targetnumber':'累计','area':'" + totalarea + "','carownername':' ','carplatenumber':' '},";
+                        }
+                        else {
+                            sb = "[{'time':'" + trace_starttime + "至" + trace_endtime + "','targetnumber':'累计','area':'" + totalarea + "','carownername':' ','carplatenumber':' '},";
+                        }
+                    }
+                    else {
+                        if (trace_starttime == trace_endtime) {
+                            sb = "[{'time':'" + trace_starttime + "','targetnumber':'累计','area':'" + totalarea + "','carownername':' ','carplatenumber':' '}," + sb.substring(1, sb.length);
+                        }
+                        else {
+                            sb = "[{'time':'" + trace_starttime + "至" + trace_endtime + "','targetnumber':'累计','area':'" + totalarea + "','carownername':' ','carplatenumber':' '}," + sb.substring(1, sb.length);
+                        }
+                    }
+                    for (var item in noarr) {
+                        if (!isNaN(Number(item.substring(0, 8)))) {
+                            if (trace_starttime == trace_endtime) {
+                                sb += "{'time':'" + trace_starttime + "','targetnumber':'" + item + "','area':'" + 0 + "','carownername':'" + noarr[item].toString().split(',')[0] + "','carplatenumber':'" + noarr[item].toString().split(',')[1] + "'},";
+                            }
+                            else {
+                                sb += "{'time':'" + trace_starttime + "至" + trace_endtime + "','targetnumber':'" + item + "','area':'" + 0 + "','carownername':'" + noarr[item].toString().split(',')[0] + "','carplatenumber':'" + noarr[item].toString().split(',')[1] + "'},";
+                            }
+                        }
+                    }
+                    strRet = sb.substring(0, sb.length - 1);
+                    strRet += "]";
+                    window.areadatajson = strRet;
+                    var arrdata = null;
+                    try { eval("arrdata=" + strRet) } catch (e) { }
+                    //mini.get('Div5').setData(arr);
+
+                    var start = 0;
+                    var end = 50;
+                    var pager = $("#gridarea").datagrid("getPager");
+                    $("#gridarea").datagrid("loadData", arrdata.slice(start, end));
+                    pager.pagination({
+                        total: arrdata.length,
+                        pageNumber: 1,
+                        pageSize: 50,
+                        pageList: [20, 50, 100],
+                        showRefresh: false,
+                        onSelectPage: function (pageNo, pageSize) {
+                            start = (pageNo - 1) * pageSize;
+                            end = start + pageSize;
+                            $("#gridarea").datagrid("loadData", arrdata.slice(start, end));
+                            pager.pagination('refresh', {
+                                total: arrdata.length,
+                                pageNumber: pageNo
+                            });
+                        }
+                    });
+                    //$("#gridarea").datagrid("loadData", arr);
+                }
+            });
+        }
+        Array.prototype.indexOf = function (val) { for (var i = 0; i < this.length; i++) { if (this[i] == val) return i; } return -1; };
+        Array.prototype.remove = function (val) { var index = this.indexOf(val); if (index > -1) { this.splice(index, 1); } };
+        function areatoday() {
+            $('#txtareastarttime').datebox("setValue", "");
+            $('#txtareaendtime').datebox("setValue", "");
+            $('#areacombo').combobox("setValue", "");
+
+            var areatoday = document.getElementById("areatoday");
+            areatoday.style.color = "#1874CD";
+            var areacustomDiv = document.getElementById("areacustomDiv");
+            areacustomDiv.style.display = "none";
+
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+            var areayesterday = document.getElementById("areayesterday");
+            areayesterday.style.color = "Black";
+            var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+            areanearlySevenDays.style.color = "Black";
+            var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+            areanearlyThirtyDays.style.color = "Black";
+
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = year + "-" + month + "-" + day; ;
+            areaButton(trace_starttime, trace_endtime);
+
+        }
+        function areayesterday() {
+            $('#txtareastarttime').datebox("setValue", "");
+            $('#txtareaendtime').datebox("setValue", "");
+            $('#areacombo').combobox("setValue", "");
+
+            var areayesterday = document.getElementById("areayesterday");
+            areayesterday.style.color = "#1874CD";
+            var areacustomDiv = document.getElementById("areacustomDiv");
+            areacustomDiv.style.display = "none";
+
+            var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+            areanearlySevenDays.style.color = "Black";
+            var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+            areanearlyThirtyDays.style.color = "Black";
+            var areatoday = document.getElementById("areatoday");
+            areatoday.style.color = "Black";
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+
+            var subtracter = 1;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = oldyear + "-" + oldmonth + "-" + oldday;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            areaButton(trace_starttime, trace_endtime);
+        }
+        function areanearlySevenDays() {
+            $('#txtareastarttime').datebox("setValue", "");
+            $('#txtareaendtime').datebox("setValue", "");
+            $('#areacombo').combobox("setValue", "");
+
+            var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+            areanearlySevenDays.style.color = "#1874CD";
+            var areacustomDiv = document.getElementById("areacustomDiv");
+            areacustomDiv.style.display = "none";
+
+            var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+            areanearlyThirtyDays.style.color = "Black";
+            var areatoday = document.getElementById("areatoday");
+            areatoday.style.color = "Black";
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+            var areayesterday = document.getElementById("areayesterday");
+            areayesterday.style.color = "Black";
+
+            var subtracter = 7;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            areaButton(trace_starttime, trace_endtime);
+        }
+        function areanearlyThirtyDays() {
+            $('#txtareastarttime').datebox("setValue", "");
+            $('#txtareaendtime').datebox("setValue", "");
+            $('#areacombo').combobox("setValue", "");
+
+            var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+            areanearlyThirtyDays.style.color = "#1874CD";
+            var areacustomDiv = document.getElementById("areacustomDiv");
+            areacustomDiv.style.display = "none";
+
+            var areatoday = document.getElementById("areatoday");
+            areatoday.style.color = "Black";
+            var custom = document.getElementById("custom");
+            custom.style.color = "Black";
+            var areayesterday = document.getElementById("areayesterday");
+            areayesterday.style.color = "Black";
+            var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+            areanearlySevenDays.style.color = "Black";
+
+            var subtracter = 30;
+            var date = new Date();
+            var year = date.getFullYear();
+            var month = date.getMonth() + 1;
+            var day = date.getDate();
+            var oldday = 0;
+            var oldmonth = 0;
+            var oldyear = 0;
+            if (day <= subtracter) {
+                if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 05 || month == 07 || month == 10 || month == 12) {
+                    oldday = 30 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 03) {
+                    if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                        oldday = 29 - (subtracter - day);
+                    }
+                    else {
+                        oldday = 28 - (subtracter - day);
+                    }
+                    oldmonth = month - 1;
+                    oldyear = year;
+                }
+                if (month == 02) {
+                    oldday = 31 - (subtracter - day);
+                    oldmonth = month - 1;
+                    oldyear = year - 1;
+                }
+            } else {
+                oldday = day - subtracter;
+                oldmonth = month;
+                oldyear = year;
+            }
+            var trace_endtime = year + "-" + month + "-" + day;
+            var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+            areaButton(trace_starttime, trace_endtime);
+        }
+        function custom() {
+            var custom = document.getElementById("custom");
+            custom.style.color = "#1874CD";
+            var areacustomDiv = document.getElementById("areacustomDiv");
+            areacustomDiv.style.display = "";
+
+            var areayesterday = document.getElementById("areayesterday");
+            areayesterday.style.color = "Black";
+            var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+            areanearlySevenDays.style.color = "Black";
+            var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+            areanearlyThirtyDays.style.color = "Black";
+            var areatoday = document.getElementById("areatoday");
+            areatoday.style.color = "Black";
+
+        }
+        function areaB() {
+            var trace_starttime = $('#txtareastarttime').datebox("getValue");
+            var trace_endtime = $('#txtareaendtime').datebox("getValue");
+
+            areaButton(trace_starttime, trace_endtime);
+        }
+        function getPolygonArea(polygon) {
+            var pts;
+            pts = polygon;
+            if (pts.length < 6) {//小于3个顶点，不能构建面  
+                return 0;
+            }
+
+            var totalArea = 0; //初始化总面积  
+            var LowX = 0.0;
+            var LowY = 0.0;
+            var MiddleX = 0.0;
+            var MiddleY = 0.0;
+            var HighX = 0.0;
+            var HighY = 0.0;
+            var AM = 0.0;
+            var BM = 0.0;
+            var CM = 0.0;
+            var AL = 0.0;
+            var BL = 0.0;
+            var CL = 0.0;
+            var AH = 0.0;
+            var BH = 0.0;
+            var CH = 0.0;
+            var CoefficientL = 0.0;
+            var CoefficientH = 0.0;
+            var ALtangent = 0.0;
+            var BLtangent = 0.0;
+            var CLtangent = 0.0;
+            var AHtangent = 0.0;
+            var BHtangent = 0.0;
+            var CHtangent = 0.0;
+            var ANormalLine = 0.0;
+            var BNormalLine = 0.0;
+            var CNormalLine = 0.0;
+            var OrientationValue = 0.0;
+            var AngleCos = 0.0;
+            var Sum1 = 0.0;
+            var Sum2 = 0.0;
+            var Count2 = 0;
+            var Count1 = 0;
+            var Sum = 0.0;
+            var Radius = EARTHRADIUS; //6378137.0,WGS84椭球半径   
+            var Count = pts.length;
+            var surpluspoint = [];
+            var num = 0;
+            var icount = 0;
+            var addicount = 2;
+            var whilecount = 0;
+            var EARTHRADIUS = 6370.81;
+            while (surpluspoint != [] && surpluspoint.length != 0 || whilecount == 0) {
+
+                whilecount++;
+                num = 0;
+                if (surpluspoint.length != 0) {
+                    //Count=surpluspoint.length+1;
+                    icount = addicount - 1;
+                }
+                if (surpluspoint.length == 1) {
+                    if (Count % 2 != 0) {
+                        LowX = pts[Count - 1].toString().split(',')[0];
+                        LowY = pts[Count - 1].toString().split(',')[1];
+                        MiddleX = pts[Count - 2].toString().split(',')[0];
+                        MiddleY = pts[Count - 2].toString().split(',')[1];
+                        HighX = pts[icount].toString().split(',')[0];
+                        HighY = pts[icount].toString().split(',')[1];
+                    }
+                    else {
+                        LowX = pts[Count - 1].toString().split(',')[0];
+                        LowY = pts[Count - 1].toString().split(',')[1];
+                        MiddleX = pts[(Count - 1 + icount) / 2].toString().split(',')[0];
+                        MiddleY = pts[(Count - 1 + icount) / 2].toString().split(',')[1];
+                        HighX = pts[icount].toString().split(',')[0];
+                        HighY = pts[icount].toString().split(',')[1];
+                    }
+                    var x1, x2, y1, y2;
+                    x1 = degreeToRad(_getLoop(LowX, -180, 180));
+                    y1 = degreeToRad(_getRange(LowY, -74, 74));
+                    x2 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                    y2 = degreeToRad(_getRange(MiddleY, -74, 74));
+                    var a = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                    x1 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                    y1 = degreeToRad(_getRange(MiddleY, -74, 74));
+                    x2 = degreeToRad(_getLoop(HighX, -180, 180));
+                    y2 = degreeToRad(_getRange(HighY, -74, 74));
+                    var b = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                    x1 = degreeToRad(_getLoop(HighX, -180, 180));
+                    y1 = degreeToRad(_getRange(HighY, -74, 74));
+                    x2 = degreeToRad(_getLoop(LowX, -180, 180));
+                    y2 = degreeToRad(_getRange(LowY, -74, 74));
+                    var c = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+
+
+
+
+                    var p = (a + b + c) / 2;
+                    var d = p * (p - a) * (p - b) * (p - c);
+                    if (d < 0) {
+                        d = 0 - d;
+                    }
+                    totalArea += Math.sqrt(d);
+                    surpluspoint = [];
+                }
+                else {
+                    if (whilecount != 1) {
+                        addicount = addicount * 2;
+                    }
+                    surpluspoint = [];
+
+                    for (var i = icount; i < Count; i += addicount) {
+
+                        if (i == icount) {
+                            LowX = pts[Count - 1].toString().split(',')[0];
+                            LowY = pts[Count - 1].toString().split(',')[1];
+                            MiddleX = pts[i].toString().split(',')[0];
+                            MiddleY = pts[i].toString().split(',')[1];
+                            HighX = pts[i + addicount / 2].toString().split(',')[0];
+                            HighY = pts[i + addicount / 2].toString().split(',')[1];
+                        }
+                        else if (i == Count + icount - addicount) {
+                            LowX = pts[i - addicount + 1].toString().split(',')[0];
+                            LowY = pts[i - addicount + 1].toString().split(',')[1];
+                            MiddleX = pts[i].toString().split(',')[0];
+                            MiddleY = pts[i].toString().split(',')[1];
+                            HighX = pts[Count - 1].toString().split(',')[0];
+                            HighY = pts[Count - 1].toString().split(',')[1];
+                        }
+                        else if ((i + addicount / 2) >= Count) {
+                            continue;
+                        }
+                        else {
+                            LowX = pts[i - addicount + 1].toString().split(',')[0];
+                            LowY = pts[i - addicount + 1].toString().split(',')[1];
+                            MiddleX = pts[i].toString().split(',')[0];
+                            MiddleY = pts[i].toString().split(',')[1];
+                            HighX = pts[i + addicount / 2].toString().split(',')[0];
+                            HighY = pts[i + addicount / 2].toString().split(',')[1];
+                        }
+                        surpluspoint[num] = pts[(2 * i + 2) / 2];
+                        num++;
+
+                        var x1, x2, y1, y2;
+                        x1 = degreeToRad(_getLoop(LowX, -180, 180));
+                        y1 = degreeToRad(_getRange(LowY, -74, 74));
+                        x2 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                        y2 = degreeToRad(_getRange(MiddleY, -74, 74));
+                        var a = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                        x1 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                        y1 = degreeToRad(_getRange(MiddleY, -74, 74));
+                        x2 = degreeToRad(_getLoop(HighX, -180, 180));
+                        y2 = degreeToRad(_getRange(HighY, -74, 74));
+                        var b = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                        x1 = degreeToRad(_getLoop(HighX, -180, 180));
+                        y1 = degreeToRad(_getRange(HighY, -74, 74));
+                        x2 = degreeToRad(_getLoop(LowX, -180, 180));
+                        y2 = degreeToRad(_getRange(LowY, -74, 74));
+                        var c = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+
+                        var p = (a + b + c) / 2;
+                        var d = p * (p - a) * (p - b) * (p - c);
+                        if (d < 0) {
+                            d = 0 - d;
+                        }
+                        totalArea += Math.sqrt(d);
+                    }
+                    return totalArea; //返回总面积  
+                }
+            }
+        }
+
+        //关闭dialog清空datagrid数据
+        function datagridClose() {
+            $('#gridarea').datagrid('loadData', { total: 0, rows: [] });
+            $('#griddistance').datagrid('loadData', { total: 0, rows: [] });
+            $('#gridonlineTimeLength').datagrid('loadData', { total: 0, rows: [] });
+        }
+        //图形视图
+        function tempchart() {
+            // distancedaychart();
+
+        }
+
+        function distancedaychart() {
+            var startd = $('#startday').datebox('getValue');
+            var endd = $('#endday').datebox('getValue');
+            var targetid = $('#selecttarget').combobox("getValue");
+            if (targetid == 666666) {
+                targetid = "";
+            }
+            var tree = $('#orgcombotree').combotree('tree'); // 得到树对象 
+            var selected = tree.tree('getSelected'); // 得到选择的节点
+            var orgid = "";
+            var orgname = "";
+            if (selected != null) {
+                orgid = selected.id;
+                orgname = selected.text;
+            }
+            $('#iframechart')[0].src = 'echarthtml/diatancechart.htm?parameter=day,' + startd + ',' + endd + ',' + targetid + ',' + orgid + ',' + orgname;
+        }
+
+        function distancemonthchart() {
+            var starty = $('#startyear').numberspinner('getValue');
+            var startm = $('#startmonth').numberspinner('getValue');
+            var endy = $('#endyear').numberspinner('getValue');
+            var endm = $('#endmonth').numberspinner('getValue');
+            var targetid = $('#selecttarget').combobox("getValue");
+            if (targetid == 666666) {
+                targetid = "";
+            }
+            var tree = $('#orgcombotree').combotree('tree'); // 得到树对象 
+            var selected = tree.tree('getSelected'); // 得到选择的节点
+            var orgid = "";
+            var orgname = "";
+            if (selected != null) {
+                orgid = selected.id;
+                orgname = selected.text;
+            }
+            $('#iframechart')[0].src = 'echarthtml/diatancechart.htm?parameter=month,' + starty + "-" + startm + "-01" + ',' + endy + "-" + endm + "-01" + ',' + targetid + ',' + orgid + ',' + orgname;
+        }
+
+
+        function onlinetimelengthdaychart() {
+            var startd = $('#onlinetimelengthstartday').datebox('getValue');
+            var endd = $('#onlinetimelengthendday').datebox('getValue');
+            var targetid = $('#onlinetimelengthselecttarget').combobox("getValue");
+            if (targetid == 666666) {
+                targetid = "";
+            }
+            var tree = $('#onlinetimelengthorgcombotree').combotree('tree'); // 得到树对象 
+            var selected = tree.tree('getSelected'); // 得到选择的节点
+            var orgid = "";
+            var orgname = "";
+            if (selected != null) {
+                orgid = selected.id;
+                orgname = selected.text;
+            }
+            $('#onlinetimelengthiframechart')[0].src = 'echarthtml/onlinetimelengthechart.htm?parameter=day,' + startd + ',' + endd + ',' + targetid + ',' + orgid + ',' + orgname;
+        }
+
+        function onlinetimelengthmonthchart() {
+            var starty = $('#onlinetimelengthstartyear').numberspinner('getValue');
+            var startm = $('#onlinetimelengthstartmonth').numberspinner('getValue');
+            var endy = $('#onlinetimelengthendyear').numberspinner('getValue');
+            var endm = $('#onlinetimelengthendmonth').numberspinner('getValue');
+            var targetid = $('#onlinetimelengthselecttarget').combobox("getValue");
+            if (targetid == 666666) {
+                targetid = "";
+            }
+            var tree = $('#onlinetimelengthorgcombotree').combotree('tree'); // 得到树对象 
+            var selected = tree.tree('getSelected'); // 得到选择的节点
+            var orgid = "";
+            var orgname = "";
+            if (selected != null) {
+                orgid = selected.id;
+                orgname = selected.text;
+            }
+            $('#onlinetimelengthiframechart')[0].src = 'echarthtml/onlinetimelengthechart.htm?parameter=month,' + starty + "-" + startm + "-01" + ',' + endy + "-" + endm + "-01" + ',' + targetid + ',' + orgid + ',' + orgname;
+        }
+        $(function () {
+            var eyear = new Date().getFullYear();
+            var emonth = new Date().getMonth() + 1;
+            var syear = 0;
+            var smonth = 0;
+            var monthnum = 6;
+            if (emonth < monthnum) {
+                syear = eyear - 1;
+                smonth = 12 - ((monthnum - 1) - emonth);
+            }
+            else {
+                syear = eyear;
+                smonth = emonth - (monthnum - 1);
+            }
+            var eday = new Date().getDate();
+            var sday = 0;
+            var edyear = new Date().getFullYear();
+            var edmonth = new Date().getMonth() + 1;
+            var sdyear = 0;
+            var sdmonth = 0;
+            var daytemp = 7;
+            if (eday < daytemp) {
+                if (edmonth == 1) {
+                    sdyear = edyear - 1;
+                    sdmonth = 12;
+                    sday = 31 - (daytemp - 1 - eday);
+                }
+                else {
+                    sdyear = edyear;
+                    sdmonth = edmonth - 1;
+                    switch (sdmonth) {
+                        case 1:
+                        case 3:
+                        case 5:
+                        case 7:
+                        case 8:
+                        case 10:
+                        case 12: sday = 31 - (daytemp - 1 - eday); break;
+                        case 4:
+                        case 6:
+                        case 9:
+                        case 11: sday = 30 - (daytemp - 1 - eday); break;
+                        case 2: if ((edyear % 4 == 0 && edyear % 100 != 0) || (edyear % 400 == 0)) {
+                                sday = 29 - (daytemp - 1 - eday);
+                            }
+                            else {
+                                sday = 28 - (daytemp - 1 - eday);
+                            } break;
+                    }
+                }
+            }
+            else {
+                sdyear = edyear;
+                sdmonth = edmonth;
+                sday = eday - (daytemp - 1);
+            }
+            $('#startyear').numberspinner('setValue', syear);
+            $('#startmonth').numberspinner('setValue', smonth);
+            $('#endyear').numberspinner('setValue', eyear);
+            $('#endmonth').numberspinner('setValue', emonth);
+            $('#startday').datebox('setValue', sdyear + "-" + sdmonth + "-" + sday);
+            $('#endday').datebox('setValue', edyear + "-" + edmonth + "-" + eday);
+            $('#diatancecombo').combobox("setValue", 666666);
+            $('#selecttarget').combobox("setValue", 666666);
+
+            $('#onlinetimelengthstartyear').numberspinner('setValue', syear);
+            $('#onlinetimelengthstartmonth').numberspinner('setValue', smonth);
+            $('#onlinetimelengthendyear').numberspinner('setValue', eyear);
+            $('#onlinetimelengthendmonth').numberspinner('setValue', emonth);
+            $('#onlinetimelengthstartday').datebox('setValue', sdyear + "-" + sdmonth + "-" + sday);
+            $('#onlinetimelengthendday').datebox('setValue', edyear + "-" + edmonth + "-" + eday);
+            $('#onlinetimecombo').combobox("setValue", 666666);
+            $('#onlinetimelengthselecttarget').combobox("setValue", 666666);
+
+            $.ajax({
+                //获取数据URL  
+                url: "actions/GetOrganizationTree.ashx",
+                type: 'GET',
+                error: function () { },
+                success: function (data) {
+                    $("#orgcombotree").combotree('setValue', data[0].id);
+                    $("#onlinetimelengthorgcombotree").combotree('setValue', data[0].id);
+                    $("#onlinetimetree").combotree('setValue', data[0].id);
+                    $("#distancetree").combotree('setValue', data[0].id);
+                }
+            });
+        })
+        function areaexport() {
+            var areadatajson = window.areadatajson;
+            if (areadatajson != null) {
+                $.messager.progress({
+                    title: '请等待',
+                    msg: '数据准备中...',
+                    text: '正在导出……'
+                });
+
+                $.ajax({
+                    url: 'actions/taskexport.ashx',
+                    type: 'post',
+                    dataType: "text",
+                    data: { tablename: "area", datajson: areadatajson },
+                    success: function (filePath) {
+                        $.messager.progress('close');
+                        var downUrl = "actions/taskexportdownload.ashx?filename=" + filePath;
+                        window.location = downUrl;
+                    }
+                });
+            }
+            else {
+                alert("请等待数据加载完毕再导出");
+            }
+        }
+
+        function distanceexport() {
+            var distancedatajson = window.distancedatajson;
+            if (distancedatajson != null) {
+                $.messager.progress({
+                    title: '请等待',
+                    msg: '数据准备中...',
+                    text: '正在导出……'
+                });
+                $.ajax({
+                    url: 'actions/taskexport.ashx',
+                    type: 'post',
+                    dataType:"text",
+                    data: { tablename: "distance", datajson: distancedatajson },
+                    success: function (filePath) {
+                        $.messager.progress('close');
+                        var downUrl = "actions/taskexportdownload.ashx?filename=" + filePath;
+                        window.location = downUrl;
+                    }
+                });
+            }
+            else {
+                alert("请等待数据加载完毕再导出");
+            }
+        }
+
+
+        function onlinetimeexport() {
+            var onlinetimedatajson = window.onlinetimedatajson;
+            if (onlinetimedatajson != null) {
+                $.messager.progress({
+                    title: '请等待',
+                    msg: '数据准备中...',
+                    text: '正在导出……'
+                });
+                $.ajax({
+                    url: 'actions/taskexport.ashx',
+                    type: 'post',
+                    dataType: "text",
+                    data: { tablename: "onlinetime", datajson: onlinetimedatajson },
+                    success: function (filePath) {
+                        $.messager.progress('close');
+                        var downUrl = "actions/taskexportdownload.ashx?filename=" + filePath;
+                        window.location = downUrl;
+                    }
+                });
+            }
+            else {
+                alert("请等待数据加载完毕再导出");
+            }
+        }
+        function onEditNode() {
+            window.superid = 0;
+            var tree = mini.get("treeMain");
+            var node = tree.getSelectedNode();
+            window.attached = "(" + node.name.split('(')[1];
+            tree.beginEdit(node);
+        }
+        function endedittreeMain(e) {
+            var name = e.text.split('(')[0];
+            if (window.superid != 0) {
+                $.ajax({
+                    url: 'actions/addchildnodes.ashx',
+                    type: 'POST',
+                    data: { superid: window.superid, name: name, orgid: 0 },
+                    error: function () { },
+                    success: function (data) {
+                        var tree = mini.get("treeMain");
+                        var node = tree.getSelectedNode();
+                        if (data == 2 || data == 0) {
+                            alert("失败");
+                            curIndex.reloadTree();
+                            return;
+                        }
+                        var newtext = name + "(0/0/0)";
+                        tree.setNodeText(node, newtext);
+                        tree.updateNode(node, { id: data });
+                    }
+                });
+            }
+            else {
+                var orgid = Number(e.node.id);
+                var tree = mini.get("treeMain");
+                var node = tree.getSelectedNode();
+                $.ajax({
+                    url: 'actions/addchildnodes.ashx',
+                    type: 'POST',
+                    data: { superid: 0, name: name, orgid: orgid },
+                    error: function () { },
+                    success: function (data) {
+                        if (data == 2 || data == 0) {
+                            alert("失败");
+                            curIndex.reloadTree();
+                            return;
+                        }
+                        var newtext = name + window.attached;
+                        tree.setNodeText(node, newtext);
+                    }
+                });
+            }
+        }
+        function onAddNode() {
+            var tree = mini.get("treeMain");
+            var node = tree.getSelectedNode();
+            window.fathernode = node;
+            window.superid = Number(node.id);
+            var newNode = {};
+            tree.addNode(newNode, "add", node);
+            tree.selectNode(newNode);
+            tree.expandNode(node);
+            tree.beginEdit(newNode);
+        }
+        function onRemoveNode(e) {
+            window.superid = 0;
+            var tree = mini.get("treeMain");
+            var node = tree.getSelectedNode();
+            var orgid = Number(node.id);
+            if (node) {
+                if (confirm("确定删除选中节点?")) {
+                    $.ajax({
+                        url: 'actions/removechildnodes.ashx',
+                        type: 'POST',
+                        data: { orgid: orgid },
+                        error: function () { },
+                        success: function (data) {
+                            if (data == 0) {
+                                alert("失败");
+                                curIndex.reloadTree();
+                                return;
+                            }
+                            if (data == 2) {
+                                alert("此组织机构下有节点/车辆,不能删除");
+                                return;
+                            }
+                            tree.removeNode(node);
+                        }
+                    });
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="layoutMain" class="mini-layout">
+        <div class='header' region="north" height='55' showheader='false' allowresize='false'>
+            <table width="100%" border="0" style="background-image: url(images/banner.jpg);">
+                <tr>
+                    <td height="47">
+                    </td>
+                    <td width="150" valign="bottom" style="padding-bottom: 10px; color: Blue">
+                        欢迎<span id="LabelUsername">wdjt</span>，<a href='weblogout.aspx'>退出</a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div title="目标监控" region="west" class="westZIndex" width="330" expanded="true" showspliticon="true"
+            showcollapsebutton="false">
+            
+            <div style="height: 10%">
+                <div id="comboxSearch" class="mini-combobox" width="250px" style="padding: 1px;"
+                    popupwidth="150" textfield="text" valuefield="id" url="data/combox_search.txt"
+                    multiselect="true" showclose="false" emptytext="请选择车辆类型">
+                    <div property="columns">
+                        <div header="车辆类型" field="text">
+                        </div>
+                    </div>
+                </div>
+                <div id="div-search">
+                    <input id="targetSearch" class="mini-textbox" value="" emptytext="请输入目标名等" />
+                    <a class="mini-button" href="javascript:curIndex.onTargetSearchOk()"><span>目标搜索</span> </a><a class="mini-button" href="javascript:curIndex.onTargetSearchDel()"
+                            id="targetSearchDel" visible="false"><span>x</span></a>
+                </div>
+            </div>
+            
+            <div class="mini-splitter" vertical="true" style="width: auto; height: 90%;">
+                <div size="40%" id="orgProvinceTab" showcollapsebutton="true" style="padding: 5px;">
+                    <div id="searchTabs" class="mini-tabs bg-toolbar" onactivechanged="curIndex.searchTabsChangedHandler(e)"
+                        activeindex="0" style="width: 100%; height: 100%;" bodystyle="border:0;background:white;">
+                        <div title="按组织结构" name="org">
+                            
+                            <div style="overflow: auto" showcollapsebutton="true">
+                                <ul id="treeMain" onnodeclick="curIndex.treeMainHandler(e)" class="mini-tree" style="width: auto;
+                                    padding: 5px; height: auto" showtreeicon="true" textfield="name" idfield="id"
+                                    imgpath="images/" parentfield="pid" resultastree="false" expandonnodeclick="true"
+                                    contextmenu="#treeMenu1" showcheckbox="true" onnodecheck="curIndex.treeCheckedHandler(e)"
+                                    onnodeselect="curIndex.onRightClickTreeBeforeMenu(e)" onendedit="endedittreeMain(e)">
+                                </ul>
+                            </div>
+                        </div>
+                        <div title="按省份区域" name="province">
+                            
+                            <div style="overflow: auto" showcollapsebutton="true">
+                                <ul id="treeProvince" onnodeclick="curIndex.treeMainHandler(e)" class="mini-tree"
+                                    style="width: auto; padding: 5px; height: auto" showtreeicon="true" textfield="name"
+                                    idfield="id" imgpath="images/" parentfield="pid" resultastree="false" expandonnodeclick="true"
+                                    contextmenu="#treeMenu1" showcheckbox="true" onnodecheck="curIndex.treeCheckedHandler(e)"
+                                    onnodeselect="curIndex.onRightClickTreeBeforeMenu(e)">
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div showcollapsebutton="true">
+                    
+                    <div id="targetgrid" class="mini-datagrid" style="width: auto; height: 100%;" idfield="id"
+                        pagesize="20" onrowdblclick="curIndex.tableRowDoubleClickHandler(e)" oncellclick="curIndex.tableCellClickHandler(e)"
+                        contextmenu="#treeMenu" allowresize="true" onrowclick="curIndex.tableRowClickHandler(e)"
+                        sortmode="client">
+                        <div property="columns">
+                            <div type="checkboxcolumn" width="8%" field="check">
+                            </div>
+                            
+                            <div field="num" width="33%" allowsort="true">
+                                目标号</div>
+                            <div name="v_name" field="carownername" width="30%" allowsort="true">
+                                车主姓名</div>
+                            <div name="v_platenumber" field="carplatenumber" width="30%" allowsort="true">
+                                车牌号</div>
+                            <div field="active" width="28%" allowsort="true">
+                                状态</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--新版面积测量-->
+            <div id="areadlg" class="easyui-dialog" title="面积测量" data-options="iconCls:'icon-save',closed:true,onClose:datagridClose"
+                style="width: 800px; height: 400px;">
+                <div class="trace_item" style="height: 40px; background-color: #F0F8FF">
+                    <div style="line-height: 40px; float: left">
+                        <a id="areatoday" onclick="areatoday()" href="#" style="text-decoration: none; color: Black;
+                            margin-top: 10px; height: 20px">今天</a> <a id="areayesterday" onclick="areayesterday()"
+                                href="#" style="text-decoration: none; color: Black">昨天</a> <a id="areanearlySevenDays"
+                                    onclick="areanearlySevenDays()" href="#" style="text-decoration: none; color: Black">
+                                    近7天</a> <a id="areanearlyThirtyDays" onclick="areanearlyThirtyDays()" href="#" style="text-decoration: none;
+                                        color: Black">近30天</a> <a id="custom" onclick="custom()" href="#" style="text-decoration: none;
+                                            color: Black">自定义</a>
+                    </div>
+                    <div id="areacustomDiv" style="display: none; line-height: 40px; margin-left: 130px">
+                        选择终端:<input id="areacombo" class="easyui-combobox" style="width: 130px;" textfield="text"
+                            valuefield="id" url="Precise/ashx/show_target.ashx" />
+                        开始时间:<input id="txtareastarttime" class="easyui-datebox" style="width: 100px;" />
+                        结束时间:<input id="txtareaendtime" class="easyui-datebox" style="width: 100px;" />
+                        <a class="easyui-linkbutton" id="areatargetselect" onclick="areaB()" style="width: 50px;">
+                            查询</a> <a class="easyui-linkbutton" iconcls="icon-save" onclick="areaexport()">导出</a>
+                    </div>
+                </div>
+                <div id="divarea" style="border: 1px solid #e6e6e6; border-top: 0px; height: 310px;
+                    width: 99%">
+                    <table id="gridarea" class="easyui-datagrid" data-options="border:false,singleSelect:true,fit:true,fitColumns:false,pagination: true, rowStyler: function (index, row) {
+                            if (index == 0 && row.targetnumber=='累计') {
+                                return 'background-color:pink;color:blue;font-weight:bold;';
+                            }
+                        }">
+                        <thead>
+                            <tr>
+                                <th width="150px" data-options="field:'time',align:'center'">
+                                    统计时间
+                                </th>
+                                <th width="150px" data-options="field:'targetnumber',align:'center'">
+                                    目标号
+                                </th>
+                                <th width="150px" data-options="field:'carownername',align:'center'">
+                                    车主姓名
+                                </th>
+                                <th width="150px" data-options="field:'carplatenumber',align:'center'">
+                                    车牌号
+                                </th>
+                                <th width="150px" data-options="field:'area',align:'center'">
+                                    面积(亩)
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <!--新版里程计算-->
+            <div id="distancedlg" class="easyui-dialog" title="里程计算" data-options="iconCls:'icon-save',closed:true,onClose:datagridClose"
+                style="width: 1002px; height: 560px;">
+                <div class="easyui-tabs" style="width: 980px; height: 520px" data-options="onSelect:function(title){ 
+if(title = '图形视图'){
+tempchart();
+}
+} ">
+                    <div id="div8" title="表格视图" style="border: 1px solid #e6e6e6; border-top: 0px; height: 100%;
+                        width: 100%">
+                        <div class="trace_item" style="height: 40px; background-color: #F0F8FF">
+                            
+                            <div id="customDiv" style="line-height: 40px;">
+                             归属机构:
+                                <input id="distancetree" class="easyui-combotree" data-options="url:'actions/GetOrganizationTree.ashx',method:'get'"
+                                    style="width: 165px" />
+                                选择终端:<input id="diatancecombo" class="easyui-combobox" style="width: 120px;" textfield="text"
+                                    valuefield="id" url="Precise/ashx/show_target.ashx" />
+                                开始时间:<input id="txtdistancestarttime1" class="easyui-datebox" style="width: 100px;" />
+                                结束时间:<input id="txtdistanceendtime1" class="easyui-datebox" style="width: 100px;" />
+                                <a class="easyui-linkbutton" id="A17" onclick="distanceB()" style="width: 50px;">查询</a>
+                                <a class="easyui-linkbutton" iconcls="icon-save" onclick="distanceexport()">导出</a>
+                            </div>
+                        </div>
+                        <div style="height: 440px">
+                            <table id="griddistance" class="easyui-datagrid" data-options="border:false,singleSelect:true,fit:true,fitColumns:false,pagination: true, 
+                        rowStyler: function (index, row) {
+                            if (index == 0 && row.id=='累计') {
+                                return 'background-color:pink;color:blue;font-weight:bold;';
+                            }
+                        }">
+                                <thead>
+                                    <tr>
+                                        <th width="190px" data-options="field:'time',align:'center'">
+                                            统计时间
+                                        </th>
+                                        <th width="190px" data-options="field:'id',align:'center'">
+                                            目标号
+                                        </th>
+                                        <th width="190px" data-options="field:'carownername',align:'center'">
+                                            车主姓名
+                                        </th>
+                                        <th width="190px" data-options="field:'carplatenumber',align:'center'">
+                                            车牌号
+                                        </th>
+                                        <th width="190px" data-options="field:'distance',align:'center'">
+                                            里程(公里)
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="div7" title="图形视图" style="border: 1px solid #e6e6e6; border-top: 0px; height: 100%;
+                        width: 99%">
+                        <div id="Div9" style="line-height: 40px;">
+                            <div style="width: 550px; float: left">
+                                查询方式:<input id="statisticcombobox" value="day" class="easyui-combobox" panelheight="50px"
+                                    style="width: 80px;" data-options="
+                            valueField: 'value',
+                            textField: 'label',
+		                    data: [{
+			                    label: '按日查询',
+			                    value: 'day'
+		                    },{
+			                        label: '按月查询',
+			                        value: 'month'
+		                    }],onSelect: function (rec) {
+                if (rec.value == 'day') {
+                document.getElementById('daydiv').style.display = '';
+                document.getElementById('monthdiv').style.display = 'none';
+                }
+                else {
+                document.getElementById('daydiv').style.display = 'none';
+                document.getElementById('monthdiv').style.display = '';
+                }
+            }" />
+                                归属机构:
+                                <input id="orgcombotree" class="easyui-combotree" data-options="url:'actions/GetOrganizationTree.ashx',method:'get'"
+                                    style="width: 165px" />
+                                选择终端:<input id="selecttarget" class="easyui-combobox" style="width: 120px;" textfield="text"
+                                    valuefield="id" url="Precise/ashx/show_target.ashx" />
+                            </div>
+                            <div id="monthdiv" style="display: none">
+                                起始年月:
+                                <input id="startyear" style="width: 52px" class="easyui-numberspinner" data-options="
+                                        min:0,
+                                        max:9999
+                                        " />
+                                <input id="startmonth" style="width: 36px" class="easyui-numberspinner" data-options="
+                                        min:1,
+                                        max:12
+                                        " />
+                                结束年月:
+                                <input id="endyear" style="width: 52px" class="easyui-numberspinner" data-options="
+                                        min:0,
+                                        max:9999
+                                        " />
+                                <input id="endmonth" style="width: 36px" class="easyui-numberspinner" data-options="
+                                        min:1,
+                                        max:12
+                                        " />
+                                <a class="easyui-linkbutton" id="A1" onclick="distancemonthchart()" style="width: 45px;">
+                                    统计</a>
+                            </div>
+                            <div id="daydiv">
+                                起始时间:<input id="startday" style="width: 95px" type="text" class="easyui-datebox"
+                                    required="required" />
+                                结束时间:<input id="endday" style="width: 95px" type="text" class="easyui-datebox" required="required" />
+                                <a class="easyui-linkbutton" id="A20" onclick="distancedaychart()" style="width: 45px;">
+                                    统计</a>
+                            </div>
+                        </div>
+                        <iframe scrolling="auto" id='iframechart' frameborder="0" style="width: 100%; height: 444px;">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+            <!--新版在线时长-->
+            <div id="onlinetimedlg" class="easyui-dialog" title="在线时长" data-options="iconCls:'icon-save',closed:true,onClose:datagridClose"
+                style="width: 1005px; height: 560px;">
+                <div class="easyui-tabs" style="width: 980px; height: 520px" data-options="onSelect:function(title){ 
+if(title = '图形视图'){
+tempchart();
+}
+} ">
+                    <div id="div10" title="表格视图" style="border: 1px solid #e6e6e6; border-top: 0px; height: 100%;
+                        width: 100%">
+                        <div class="trace_item" style="height: 40px; background-color: #F0F8FF">
+                            
+                            <div id="onlineTimeLengthcustomDiv" style="line-height: 40px;">
+                             归属机构:
+                                <input id="onlinetimetree" class="easyui-combotree" data-options="url:'actions/GetOrganizationTree.ashx',method:'get'"
+                                    style="width: 165px" />
+                                选择终端:<input id="onlinetimecombo" class="easyui-combobox" style="width: 120px;" textfield="text"
+                                    valuefield="id" url="Precise/ashx/show_target.ashx" />
+                                开始时间:<input id="txtonlinetimelengthstarttime1" class="easyui-datebox" style="width: 100px;" />
+                                结束时间:<input id="txtonlinetimelengthendtime1" class="easyui-datebox" style="width: 100px;" />
+                                <a class="easyui-linkbutton" id="A16" onclick="onlineTimeLength()" style="width: 50px;">
+                                    查询</a> <a class="easyui-linkbutton" iconcls="icon-save" onclick="onlinetimeexport()">
+                                        导出</a>
+                            </div>
+                        </div>
+                        <div style="height: 440px">
+                            <table id="gridonlineTimeLength" class="easyui-datagrid" data-options="border:false,singleSelect:true,fit:true,fitColumns:false,pagination: true, 
+                        rowStyler: function (index, row) {
+                            if (index == 0 && row.id=='累计') {
+                                return 'background-color:pink;color:blue;font-weight:bold;';
+                            }
+                        }">
+                                <thead>
+                                    <tr>
+                                        <th width="190px" data-options="field:'time',align:'center'">
+                                            统计时间
+                                        </th>
+                                        <th width="190px" data-options="field:'id',align:'center'">
+                                            目标号
+                                        </th>
+                                        <th width="190px" data-options="field:'carownername',align:'center'">
+                                            车主姓名
+                                        </th>
+                                        <th width="190px" data-options="field:'carplatenumber',align:'center'">
+                                            车牌号
+                                        </th>
+                                        <th width="190px" data-options="field:'ontime',align:'center'">
+                                            在线时长
+                                        </th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="div12" title="图形视图" style="border: 1px solid #e6e6e6; border-top: 0px; height: 100%;
+                        width: 99%">
+                        <div id="Div13" style="line-height: 40px;">
+                            <div style="width: 550px; float: left">
+                                查询方式:<input id="Text7" value="day" class="easyui-combobox" panelheight="50px" style="width: 80px;"
+                                    data-options="
+                            valueField: 'value',
+                            textField: 'label',
+		                    data: [{
+			                    label: '按日查询',
+			                    value: 'day'
+		                    },{
+			                        label: '按月查询',
+			                        value: 'month'
+		                    }],onSelect: function (rec) {
+                if (rec.value == 'day') {
+                document.getElementById('onlinetimelengthdaydiv').style.display = '';
+                document.getElementById('onlinetimelengthmonthdiv').style.display = 'none';
+                }
+                else {
+                document.getElementById('onlinetimelengthdaydiv').style.display = 'none';
+                document.getElementById('onlinetimelengthmonthdiv').style.display = '';
+                }
+            }" />
+                                归属机构:
+                                <input id="onlinetimelengthorgcombotree" class="easyui-combotree" data-options="url:'actions/GetOrganizationTree.ashx',method:'get'"
+                                    style="width: 165px" />
+                                选择终端:<input id="onlinetimelengthselecttarget" class="easyui-combobox" style="width: 120px;"
+                                    textfield="text" valuefield="id" url="Precise/ashx/show_target.ashx" />
+                            </div>
+                            <div id="onlinetimelengthmonthdiv" style="display: none">
+                                起始年月:
+                                <input id="onlinetimelengthstartyear" style="width: 52px" class="easyui-numberspinner"
+                                    data-options="
+                                        min:0,
+                                        max:9999
+                                        " />
+                                <input id="onlinetimelengthstartmonth" style="width: 36px" class="easyui-numberspinner"
+                                    data-options="
+                                        min:1,
+                                        max:12
+                                        " />
+                                结束年月:
+                                <input id="onlinetimelengthendyear" style="width: 52px" class="easyui-numberspinner"
+                                    data-options="
+                                        min:0,
+                                        max:9999
+                                        " />
+                                <input id="onlinetimelengthendmonth" style="width: 36px" class="easyui-numberspinner"
+                                    data-options="
+                                        min:1,
+                                        max:12
+                                        " />
+                                <a class="easyui-linkbutton" id="A21" onclick="onlinetimelengthmonthchart()" style="width: 45px;">
+                                    统计</a>
+                            </div>
+                            <div id="onlinetimelengthdaydiv">
+                                起始时间:<input id="onlinetimelengthstartday" style="width: 95px" type="text" class="easyui-datebox"
+                                    required="required" />
+                                结束时间:<input id="onlinetimelengthendday" style="width: 95px" type="text" class="easyui-datebox"
+                                    required="required" />
+                                <a class="easyui-linkbutton" id="A22" onclick="onlinetimelengthdaychart()" style="width: 45px;">
+                                    统计</a>
+                            </div>
+                        </div>
+                        <iframe scrolling="auto" id='onlinetimelengthiframechart' frameborder="0" style="width: 100%;
+                            height: 444px;"></iframe>
+                    </div>
+                </div>
+            </div>
+            
+            <ul id="treeMenu" class="mini-contextmenu" onbeforeopen="curIndex.onTreeCtxMenu(e)">
+                <!--<li onclick="curIndex.onTreeMenu(e)">尾迹查询</li>-->
+                <li onclick="curIndex.onTreeMenu(e)">修改用户信息</li>
+                <li onclick="curIndex.onTreeMenu(e)">导出车辆轨迹信息</li>
+                <li onclick="curIndex.onTreeMenu(e)">导出车辆详细信息</li>
+                <li onclick="curIndex.onTreeMenu(e)">车辆划拨</li>
+                <li><span>尾迹查询</span>
+                    <ul>
+                        <li iconcls="icon-new" onclick="curIndex.onTreeMenu(e)">地图显示尾迹</li>
+                        <li iconcls="icon-new" onclick="curIndex.onTreeMenu(e)">列表显示尾迹</li>
+                    </ul>
+                </li>
+                <li onclick="curIndex.onTreeMenu(e)">轨迹回放</li>
+                <li><span>终端参数设置</span>
+                    <ul>
+                        <li iconcls="icon-new" onclick="curIndex.onTreeMenu(e)">单参数设置</li>
+                        <li iconcls="icon-new" onclick="curIndex.onTreeMenu(e)">批量参数设置</li>
+                    </ul>
+                </li>
+                <li onclick="curIndex.onTreeMenu(e)">调位指令</li>
+                <li onclick="curIndex.onTreeMenu(e)">发送信息</li>
+                <li onclick="curIndex.onTreeMenu(e)">历史状态</li>
+                <li onclick="curIndex.onTreeMenu(e)">历史报警</li>
+            </ul>
+            <div id="treeDiv" class="mini-window" title="车辆划拨" style="width: 350px; height: 550px;"
+                showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                
+                <div style="overflow: auto; height: 96%" showcollapsebutton="true">
+                    <ul id="treeorg" class="mini-tree" style="width: auto; padding: 5px;" showtreeicon="true"
+                        textfield="name" idfield="id" imgpath="images/" parentfield="pid" resultastree="false"
+                        onnodeclick="curIndex.beforeNodeClick(e)">
+                    </ul>
+                </div>
+                <div style="width: 100%; height: 4%">
+                    <a class="mini-button" id="A6" onclick="curIndex.confirmvehicletransfer(e)" style="width: 50px;">
+                        确定</a> <a class="mini-button" id="A7" onclick="curIndex.canelvehicletransfer(e)"
+                            style="width: 50px;">取消</a>
+                </div>
+            </div>
+            <!--批量划拨-->
+            <div id="batchvehicletransferDiv" class="mini-window" title="批量划拨" style="width: 550px;
+                height: 673px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <div id="Div1" style="width: 100%; height: 20px">
+                    <a class="mini-button" id="A10" onclick="curIndex.downloadimporttemplet('templet')"
+                        style="width: 100px; float: left">下载模板</a>
+                    <form id="input" action="wdjt_MapMonitor.aspx" method="post" enctype="multipart/form-data"
+                    target="hiddenIFrame">
+                    <input id="excelFile" name="file" type="file" style="margin-left: 10px" />
+                    <input type="submit" class="button" value="导入excel" style="margin-left: 10px" />
+                    </form>
+                    <iframe id='hiddenIFrame' name='hiddenIFrame' style="display: none;"></iframe>
+                </div>
+                <div style="height: 220px" showcollapsebutton="true">
+                    <ul id="batchvehicletransferTree" class="mini-tree" style="width: 100%; height: 100%;
+                        padding: 5px;" showtreeicon="true" textfield="name" idfield="id" imgpath="images/"
+                        parentfield="pid" resultastree="false" onnodeclick="beforetreeNodeClick(e)">
+                    </ul>
+                </div>
+                <div id="Div3" style="width: 100%; height: 20px">
+                    <a class="mini-button" id="A11" onclick="confirmorg()" style="width: 100px; float: left">
+                        确定组织机构</a>
+                </div>
+                <div id="dgimportvehicle" class="mini-datagrid" style="height: 350px" allowresize="true"
+                    idfield="id" showpager='false' multiselect="true">
+                    <div property="columns">
+                        
+                        <div type="indexcolumn">
+                        </div>
+                        <div type="checkcolumn">
+                        </div>
+                        <div field="targetnumber" width="32%" headeralign="center" align='center'>
+                            目标号</div>
+                        <div field="oldorgname" width="32%" headeralign="center" align='center'>
+                            旧组织机构</div>
+                        <div field="neworgname" width="32%" headeralign="center" align='center'>
+                            新组织机构</div>
+                        <div field="oldorgid" width="32%" headeralign="center" align='center' visible='false'>
+                            旧组织机构ID</div>
+                        <div field="neworgid" width="32%" headeralign="center" align='center' visible='false'>
+                            新组织机构ID</div>
+                    </div>
+                </div>
+                <div style="width: 100%; height: 20px">
+                    <a class="mini-button" id="A8" onclick="curIndex.confirmbatchvehicletransfer()" style="width: 50px;
+                        margin-left: 170px">确定</a> <a class="mini-button" id="A9" onclick="canelbatchvehicletransfer()"
+                            style="width: 50px; margin-left: 80px">取消</a>
+                </div>
+            </div>
+            
+            <ul id="treeMenu1" class="mini-contextmenu">
+                <li onclick="curIndex.onRightClickTreeMenu(e)">批量导出车辆详细信息</li>
+                <li onclick="curIndex.onRightClickTreeMenu(e)">批量划拨</li>
+                <li onclick="onAddNode()">增加子节点</li>
+                <li onclick="onEditNode()">编辑节点</li>
+                <li onclick="onRemoveNode()">删除节点</li>
+            </ul>
+            
+            <div id="vehicleInfoDiv" class="mini-window" title="修改车辆信息" style="width: 500px;
+                height: 280px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <table>
+                    <tr>
+                        <td>
+                            终端号:
+                        </td>
+                        <td>
+                            <input id="txttargetnumber" readonly="true" style="width: 170px;" class="mini-textbox"
+                                value="" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            SIM卡号:
+                        </td>
+                        <td>
+                            <input id="txtsimcard" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            使用状态:
+                        </td>
+                        <td>
+                            <input id="txtstatus" url="data/vehicle_status.txt" textfiled="text" idfield="id"
+                                value="" class="mini-combobox" style="width: 170px;" shownullitem="false" allowinput="false"
+                                onvaluechanged="curIndex.changeUserParaSel(e)" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            型号:
+                        </td>
+                        <td>
+                            <input id="txtmodel" url="data/vehicle_model.txt" textfiled="text" idfield="id" value=""
+                                class="mini-combobox" style="width: 170px;" shownullitem="false" allowinput="false"
+                                onvaluechanged="curIndex.changeUserParaSel(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            车辆品牌:
+                        </td>
+                        <td>
+                            <input id="txtcarbrand" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            终端类型:
+                        </td>
+                        <td>
+                            <input id="txtcartype" url="data/vehicle_cartype.txt" textfiled="text" idfield="id"
+                                value="" class="mini-combobox" style="width: 170px;" shownullitem="false" allowinput="false"
+                                onvaluechanged="curIndex.changeUserParaSel(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            车辆型号:
+                        </td>
+                        <td>
+                            <input id="txtcarmodel" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            车架号:
+                        </td>
+                        <td>
+                            <input id="txtcaridnumber" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            车牌号:
+                        </td>
+                        <td>
+                            <input id="txtcarplatenumber" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            生产厂家:
+                        </td>
+                        <td>
+                            <input id="txtcarproducer" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            马力:
+                        </td>
+                        <td>
+                            <input id="txtcarpower" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            车主姓名:
+                        </td>
+                        <td>
+                            <input id="txtcarownername" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            车主地址:
+                        </td>
+                        <td>
+                            <input id="txtcarowneraddree" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                        <td style="padding-left: 25px;">
+                            车主电话:
+                        </td>
+                        <td>
+                            <input id="txtcarownerphone" style="width: 170px;" class="mini-textbox" value="" />
+                        </td>
+                    </tr>
+                </table>
+                <div class="trace_item" style="height: 4%">
+                    <a class="mini-button" id="A12" onclick="curIndex.importCarInfo()" style="width: 50px;
+                        margin-top: 10px;">保存</a>
+                </div>
+            </div>
+            
+            <div id="winTrace" class="mini-window" title="轨迹回放演示" style="width: 300px; height: 230px;"
+                showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                
+                <div class="trace_item">
+                    选择终端:<input id="alltargetlist" class="mini-textbox" style="width: 170px;" allowinput="false" /></br>
+                    回放速度:<input id="velocityList" url="data/velocity_list.txt" textfiled="text" idfield="id"
+                        value="8000" class="mini-combobox" style="width: 170px;" shownullitem="false"
+                        allowinput="false" onvaluechanged="curIndex.trackSpeedChange(e)" /></br> 开始时间:<input
+                            id="trace_starttime" class="mini-datepicker" style="width: 170px;" format="yyyy-MM-dd H:mm:ss"
+                            showtime="true" required="true" requirederrortext="开始时间不能为空" onfocus="curIndex.timeChange(e)" /></br>
+                    结束时间:<input id="trace_endtime" class="mini-datepicker" style="width: 170px;" format="yyyy-MM-dd H:mm:ss"
+                        showtime="true" required="true" requirederrortext="结束时间不能为空" onfocus="curIndex.timeChange(e)" /></br>
+                    查询结果:<input id="QueryResult" class="mini-textbox" style="width: 170px" value="" readonly />
+                </div>
+                <div class='trace_item' style="padding-top: 5px;">
+                    <a class="mini-button" id="TrackQuery" onclick="curIndex.bikeQuery(e)" style="width: 50px;">
+                        查询</a> <a class="mini-button" id="TraceToday" onclick="curIndex.bikeQueryToday(e)"
+                            style="width: 50px;">今日</a> <a class="mini-button" id="TraceYestoday" onclick="curIndex.bikeQueryYestoday(e)"
+                                style="width: 50px;">昨日</a>
+                </div>
+                <div class='trace_item' style="padding-top: 5px;">
+                    <a class="mini-button" id="TrackBegin" onclick="curIndex.bikeRun(e)" style="width: 50px;">
+                        回放</a> <a class="mini-button" id="TrackRun" onclick="curIndex.bikePause(e)" style="width: 50px;">
+                            暂停</a> <a class="mini-button" id="TrackShow" onclick="curIndex.bikeShow(e)" style="width: 50px;">
+                                显示</a>
+                </div>
+            </div>
+            
+            <div id="vehicleDetailsDiv" class="mini-window" title="车辆数据导出" style="width: 400px;
+                height: 530px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <div id="vehicleDetailsTableDiv" onrowclick="curIndex.dgLastInfoHandler(e)" url='actions/get_exportvehicledetails.ashx'
+                    class="mini-datagrid" style="height: 95%" allowresize="true" idfield="id" multiselect="true"
+                    showpager='false'>
+                    <div property="columns">
+                        <div type="indexcolumn">
+                        </div>
+                        <div type="checkcolumn">
+                        </div>
+                        <div field="targetnumber" width="48%" headeralign="center" align='center'>
+                            目标号</div>
+                        <div field="carownername" width="48%" headeralign="center" align='center'>
+                            车主姓名</div>
+                    </div>
+                </div>
+                <div class="trace_item" style="height: 4%">
+                    <a class="mini-button" id="A13" onclick="curIndex.exportCarDetails(e)" style="width: 50px;">
+                        导出</a>
+                </div>
+            </div>
+            
+            <div id="trackbackDiv" class="mini-window" title="轨迹数据导出" style="width: 800px; height: 530px;"
+                showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                
+                <div class="trace_item" style="height: 6%">
+                    选择终端:<input id="txtvessel" class="mini-textbox" style="width: 120px;" allowinput="false" />
+                    开始时间:<input id="txtstarttime" class="mini-datepicker" style="width: 170px;" format="yyyy-MM-dd H:mm:ss"
+                        showtime="true" required="true" requirederrortext="开始时间不能为空" onfocus="curIndex.timeChange(e)" />
+                    结束时间:<input id="txtendtime" class="mini-datepicker" style="width: 170px;" format="yyyy-MM-dd H:mm:ss"
+                        showtime="true" required="true" requirederrortext="结束时间不能为空" onfocus="curIndex.timeChange(e)" />
+                    <a class="mini-button" id="A4" onclick="curIndex.trackbikeShow(e)" style="width: 50px;">
+                        查询</a> <a class="mini-button" id="A2" onclick="curIndex.exportCarTrackback(e)" style="width: 50px;">
+                            导出</a>
+                </div>
+                <div id="trackbikedatagrid" onrowclick="curIndex.dgLastInfoHandler(e)" url='actions/get_last_position.ashx'
+                    class="mini-datagrid" style="height: 90%" allowresize="true" idfield="id" multiselect="false"
+                    showpager='false'>
+                    <div property="columns">
+                        
+                        <div field="targetnumber" width="14%" headeralign="center" align='center'>
+                            目标号</div>
+                        <div field="sim" width="14%" headeralign="center" align='center' visible='false'>
+                            SIM卡</div>
+                        <div field="time" width="14%" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                            align='center'>
+                            定位时间</div>
+                        <div field="velocity" width="14%" headeralign="center" align='center'>
+                            速度(KM/H)</div>
+                        <div field="dir" width="14%" headeralign="center" align='center'>
+                            方向(度)</div>
+                        <div field="longitude" width="14%" headeralign="center" align='center'>
+                            经度</div>
+                        <div field="latitude" width="14%" headeralign="center" align='center'>
+                            纬度</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="winHistoricStatus" class="mini-window" title="历史状态查询" style="width: 300px;
+                height: 200px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <h2 class="trace_h2">
+                    <span id='historicStatusNum' style="display: none"></span><span id='historicStatusTarget'>
+                    </span>终端历史状态查询</h2>
+                <div class="trace_item">
+                    开始时间:<input id="historicStatus_starttime" class="mini-datepicker" style="width: 170px;"
+                        format="yyyy-MM-dd H:mm:ss" showtime="true" required="true" requirederrortext="开始时间不能为空" /></br>
+                    结束时间:<input id="historicStatus_endtime" class="mini-datepicker" style="width: 170px;"
+                        format="yyyy-MM-dd H:mm:ss" showtime="true" required="true" requirederrortext="结束时间不能为空" />
+                </div>
+                <div class='trace_item' style="padding-top: 9px;">
+                    <a class="mini-button" onclick="curIndex.historicStatusQuery(e)">查询</a>
+                </div>
+            </div>
+            
+            <div id="winHistoricAlarm" class="mini-window" title="历史报警查询" style="width: 300px;
+                height: 200px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <h2 class="trace_h2">
+                    <span id='historicAlarmNum' style="display: none"></span><span id='historicAlarmTarget'>
+                    </span>终端历史报警查询</h2>
+                <div class="trace_item">
+                    开始时间:<input id="historicAlarm_starttime" class="mini-datepicker" style="width: 170px;"
+                        format="yyyy-MM-dd H:mm:ss" showtime="true" required="true" requirederrortext="开始时间不能为空" /></br>
+                    结束时间:<input id="historicAlarm_endtime" class="mini-datepicker" style="width: 170px;"
+                        format="yyyy-MM-dd H:mm:ss" showtime="true" required="true" requirederrortext="结束时间不能为空" />
+                </div>
+                <div class='trace_item'>
+                    报警类型：<input id="targetAlarmType" url="data/target_alarm_type.txt" textfiled="text"
+                        idfield="id" value="0" class="mini-combobox" style="width: 120px;" shownullitem="false"
+                        allowinput="false" />
+                    <a class="mini-button" onclick="curIndex.historicAlarmQuery(e)">查询</a>
+                </div>
+            </div>
+            
+            <div id="winSoleParameterSetting" class="mini-window" title="单个终端参数设置" style="width: 300px;
+                height: 300px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <h2 class="trace_h2">
+                    <span id='spanSPSNum' style="display: none"></span><span id='spanSPSTarget'></span>
+                    终端参数设置</h2>
+                <table border="0" cellpadding="1" cellspacing="2" style="width: 230px; margin: 0 auto">
+                    <tr>
+                        <td>
+                            终端参数：
+                        </td>
+                        <td>
+                            <input id="spsPara" url="data/sole_para_setting_list.txt" textfiled="text" idfield="id"
+                                value="1" class="mini-combobox" style="width: 150px;" shownullitem="false" allowinput="false"
+                                onvaluechanged="curIndex.changeSoleParaSel(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            设置阈值：
+                        </td>
+                        <td>
+                            <input id="spsValue" class="mini-textbox" style="width: 150px" value="3400000" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            阈值描述：
+                        </td>
+                        <td>
+                            
+                            <textarea id="spsDesc" class="mini-textarea" style="width: 150px; height: 100px"
+                                readonly="readonly"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center; padding-top: 20px">
+                            <a class="mini-button" style="width: 60px;" onclick="curIndex.onSoleParameterSettingOk(e)">
+                                确定</a>&nbsp;<a class="mini-button" style="width: 60px;" onclick="curIndex.onSoleParameterSettingCancel(e)">取消</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div id="winBatchParameterSetting" class="mini-window" title="批量参数设置" style="width: 300px;
+                height: 480px;" showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <h2 class="trace_h2">
+                    <span id='spanBPSNum' style="display: none"></span><span id='spanBPSTarget'></span>
+                    终端批量参数设置</h2>
+                <table border="0" cellpadding="1" cellspacing="1">
+                    <tr>
+                        <td>
+                            低电压报警阈值：
+                        </td>
+                        <td>
+                            <input id="cfgValue1" class="mini-textbox" value="3400000" onvalidation="curIndex.onddyfzvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isCfgValue2">
+                        <td>
+                            正常电压阈值：
+                        </td>
+                        <td>
+                            <input id="cfgValue2" class="mini-textbox" value="3600000" onvalidation="curIndex.onzcdyfzvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isCfgValue3">
+                        <td>
+                            震动报警阈值：
+                        </td>
+                        <td>
+                            <input id="cfgValue3" class="mini-textbox" value="30" onvalidation="curIndex.onzdbjfzvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            震动等级报警阈值：
+                        </td>
+                        <td>
+                            <input id="cfgValue4" class="mini-textbox" value="3" onvalidation="curIndex.onzddjfzvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            位移报警阈值：
+                        </td>
+                        <td>
+                            <input id="cfgValue5" class="mini-textbox" value="50" onvalidation="curIndex.onwybjfzvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            增加车主：
+                        </td>
+                        <td>
+                            <input id="cfgValue6" class="mini-textbox" value="1,18910406091" onvalidation="curIndex.onaddcarvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            删除车主：
+                        </td>
+                        <td>
+                            <input id="cfgValue7" class="mini-textbox" value="1" onvalidation="curIndex.ondelcarvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isAllowIPandPort">
+                        <td>
+                            设置IP地址与端口号：
+                        </td>
+                        <td>
+                            <input id="cfgValue8" class="mini-textbox" value="114.242.203.139:6007" onvalidation="curIndex.onipportvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isAllowSMS">
+                        <td>
+                            是否允许短信上传信息：
+                        </td>
+                        <td>
+                            <input id="cfgValue9" value="1" class="mini-radiobuttonlist" data="[{id: 1, text: '允许'}, {id: 0, text: '禁止'}]"
+                                selectedindex="0" />
+                        </td>
+                    </tr>
+                    <tr id="isCfgValue10">
+                        <td>
+                            定时回传时间间隔和定时回传次数：
+                        </td>
+                        <td>
+                            <input id="cfgValue10" class="mini-textbox" value="0020,FFFF" onvalidation="curIndex.onbuploadvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isCfgValue11">
+                        <td>
+                            在线待命回传间隔：
+                        </td>
+                        <td>
+                            <input id="cfgValue11" class="mini-textbox" value="0020" onvalidation="curIndex.onauploadvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isCfgValue12">
+                        <td>
+                            车速报警阈值：
+                        </td>
+                        <td>
+                            <input id="cfgValue12" class="mini-textbox" value="10" onvalidation="curIndex.onoverspeedvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr id="isCfgValue13">
+                        <td>
+                            ACC熄火进入休眠时间：
+                        </td>
+                        <td>
+                            <input id="cfgValue13" class="mini-textbox" value="0100" onvalidation="curIndex.ongorestvalidation(e)" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="right">
+                            <a class="mini-button" style="width: 60px;" onclick="curIndex.onBatchParameterSettingOk(e)">
+                                确定</a>&nbsp;
+                        </td>
+                        <td align="left">
+                            &nbsp;<a class="mini-button" style="width: 60px;" onclick="curIndex.onBatchParameterSettingCancel(e)">取消</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div id="winSendMsg" class="mini-window" title="发送信息" style="width: 300px; height: 300px;"
+                showshadow="true" showmodal="false" allowresize="true" allowdrag="true">
+                <h2 class="trace_h2">
+                    <span id='span6'></span>向所选择的终端发送信息</h2>
+                </br>
+                <table border="0" cellpadding="1" cellspacing="2" style="width: 230px; margin: 0 auto">
+                    <tr>
+                        <td>
+                            发送方式<input id="sendTypeList" url="data/sendtype_list.txt" textfiled="text" idfield="id"
+                                value="1" class="mini-combobox" style="width: 170px;" shownullitem="false" allowinput="false" />
+                            <br />
+                            <br />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            
+                            <textarea id="txtMsgContent" class="mini-textarea" emptytext="请输入信息内容" style="width: 220px;
+                                height: 100px"></textarea>
+                            <br />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center; padding-top: 20px">
+                            <a class="mini-button" style="width: 60px;" onclick="curIndex.onSendMsgOk(e)">发送</a>&nbsp;<a
+                                class="mini-button" style="width: 60px;" onclick="curIndex.onSendMsgCancel(e)">取消</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div title="" region="center" style="position: relative;">
+            <!--去除expanded="true"-->
+            
+            <div id="toolbarMain" class="mini-toolbar" style="padding: 2px;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 100%;">
+                            <!--以下a标签均去除plain="true"-->
+                            <a id='traceReplay' class="mini-button" iconcls="icon-user7" style="border: none;
+                                background: none; width: 85px; height: 21px" onclick="curIndex.onTreeMenu_guijihuifang(0)">
+                                轨迹回放</a> <span class="separator"></span><a id='fullScreen' class="mini-menubutton"
+                                    menu="#groupbytypeMenu" iconcls="icon-user10" style="border: none; background: none;
+                                    width: 99px; height: 21px">信息查询</a> <span class="separator"></span><a id='A5' class="mini-menubutton"
+                                        menu="#tCarMenu" iconcls="icon-user12" style="border: none; background: none;
+                                        width: 99px; height: 21px">车辆查询</a><span class="separator"> </span><a id='a3' class="mini-menubutton"
+                                            menu="#toolbarMenu" iconcls="icon-user8" style="border: none; background: none;
+                                            width: 79px; height: 21px">工具</a> <span class="separator"></span>
+                            <a id='a19' class="mini-menubutton" menu="#settingMenu1" iconcls="icon-user9" style="border: none;
+                                background: none; width: 99px; height: 21px">系统管理</a><span id="Span1" class="separator"></span><a
+                                    id='A15' class="mini-menubutton" menu="#preciseMenu" iconcls="icon-user11" style="border: none;
+                                    background: none; width: 99px; height: 21px">作业统计</a> <span id="sA5" class="separator">
+                                    </span><a id='A14' class="mini-button" iconcls="icon-user7" style="border: none;
+                                        background: none; width: 95px; height: 21px; text-align: left" onclick="curIndex.fullScreenHandler(e)">
+                                        全屏</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <ul id="preciseMenu" class="mini-menu" style="display: none;">
+                <li iconcls="icon-open" onclick="$('#onlinetimedlg').dialog('open');onlinetimelengthload()">
+                    在线时长</li>
+                <li iconcls="icon-open" onclick="$('#distancedlg').dialog('open');distanceload()">里程计算</li>
+               
+            </ul>
+            <ul id="toolbarMenu" class="mini-menu" style="display: none;">
+                <li iconcls="icon-open" onclick="curIndex.displayallterminals(e)">显示全部终端</li>
+                <li iconcls="icon-open" onclick="curIndex.zoomInHandler(e)">拉框放大</li>
+                <li iconcls="icon-open" onclick="curIndex.zoomOutHandler(e)">拉框缩小</li>
+                <li iconcls="icon-open" onclick="curIndex.measureLengthHandler(e)">测距</li>
+                <li iconcls="icon-open" onclick="curIndex.satliteMapHandler(e)">卫星地图</li>
+            </ul>
+            <ul id="settingMenu1" class="mini-menu" style="display: none;">
+                <li iconcls="icon-open" onclick="curIndex.showMiniWindow('userChangePasswd')">用户修改密码</li>
+                <li iconcls="icon-open" onclick="curIndex.showMiniWindow('userParamSetting')">用户参数设置</li>
+                
+                <li iconcls="icon-open" onclick="curIndex.showMiniWindow('manageInfoSys')">管理信息系统</li>
+                <li iconcls="icon-open" onclick="curIndex.showMiniWindow('myMessage')">我的消息</li>
+                <li iconcls="icon-open" onclick="curIndex.showMiniWindow('systemIntro')">系统说明</li>
+            </ul>
+            <!--menu-->
+            <ul id="popupMenu1" class="mini-menu" style="display: none;">
+                <li iconcls="icon-open" onclick="curIndex.areaAlarmHandler(e)">多边形</li>
+                <li iconcls="icon-open" onclick="curIndex.areaAlarmCircleHandler(e)">圆形</li>
+            </ul>
+            <ul id="tCarMenu" class="mini-menu" style="display: none;">
+                <li iconcls="icon-open" onclick="curIndex.threeGuaranteesCar(4,1)">三包车</li>
+                
+            </ul>
+            <!--menu-->
+            <ul id="groupbytypeMenu" class="mini-menu" style="display: none;" url="actions/get_online_count_by_cartype.ashx">
+            </ul>
+            
+            <div class="mini-fit">
+                
+                <div id='divBaiduMap'>
+                </div>
+                
+                
+            </div>
+            
+            <div id="manageInfoSys" class="mini-window" style="width: 350px; height: 250px;"
+                title="管理信息系统">
+                <div style="text-align: center" title="管理信息系统"> <div id="Div3"  title=""    showshadow="true" showmodal="false" allowresize="true" allowdrag="true">    <h2 class="trace_h2">        <a href='http://www.beidouguard.com:6006/' target="_blank">目标及用户管理</a></h2> </div>    </div>
+            </div>
+            
+            <div id="userParamSetting" class="mini-window" style="width: 350px; height: 250px;"
+                title="用户参数设置">
+                <div title="" style="width: 300px; height: 200px;" showshadow="true" showmodal="false"
+                    allowresize="true" allowdrag="true">
+                    <table border="0" cellpadding="1" cellspacing="2" style="width: 250px; margin: 0 auto">
+                        <tr>
+                            <td>
+                                参数名称：
+                            </td>
+                            <td>
+                                <input id="userConfig" url="data/user_para_setting_list.txt" textfiled="text" idfield="id"
+                                    value="ONLINEINTERVAL" class="mini-combobox" style="width: 170px;" shownullitem="false"
+                                    allowinput="false" onvaluechanged="curIndex.changeUserParaSel(e)" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                设置阈值：
+                            </td>
+                            <td>
+                                <input id="userConfigValue" class="mini-textbox" style="width: 170px" value="24" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                阈值描述：
+                            </td>
+                            <td>
+                                <textarea id="userConfigDesc" class="mini-textarea" style="width: 170px; height: 100px"
+                                    readonly="readonly" value="单位:小时;终端最后报位时间加上在线阈值大于当前时间,终端的状态为在线状态"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding-top: 20px">
+                                <a class="mini-button" style="width: 60px;" onclick="curIndex.onUserParameterSettingOk(e)">
+                                    确定</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="userChangePasswd" class="mini-window" style="width: 350px; height: 200px;"
+                title="用户修改密码">
+                <div id="Div2" title="" style="width: 300px; height: 150px;" showshadow="true" showmodal="false"
+                    allowresize="true" allowdrag="true">
+                    <table border="0" cellpadding="1" cellspacing="2" style="width: 250px; margin: 0 auto">
+                        <tr>
+                            <td>
+                                旧密码：
+                            </td>
+                            <td>
+                                <input id="oldPwd" class="mini-password" style="width: 170px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                新密码：
+                            </td>
+                            <td>
+                                <input id="newPwd" class="mini-password" style="width: 170px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                新密码：
+                            </td>
+                            <td>
+                                <input id="newPwd2" class="mini-password" style="width: 170px" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" style="text-align: center; padding-top: 20px">
+                                <a class="mini-button" style="width: 60px;" onclick="curIndex.changePwd(e)">确定</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div id="myMessage" class="mini-window" style="width: 350px; height: 250px;" title="我的消息">
+                <div title="我的消息" id="mymsg_menu"> <iframe id="Iframe1" runat="server" src="mymsg/mymsg.html" width="300" height="100%" frameborder="no" border="0" marginwidth="0" marginheight="0" scrolling="no" allowtransparency="yes"></iframe></div>
+            </div>
+            
+            <div id="systemIntro" class="mini-window" style="width: 350px; height: 400px;" title="系统说明">
+                <div id="sysDesc" style="padding: 10px">
+                    <h3>
+                        北斗卫士位置服务平台
+                    </h3>
+                    <p>
+                        北斗卫士位置服务平台为公众定位导航产品提供统一的位置服务，在平台上实现目标的实时位置监控、状态监控、报警监控、管理控制、轨迹回放等功能，可为个人、企业或政府部门等各种不同类型用户提供个人位置追踪、车队管理以及车辆监控等服务。<br />
+                        联系网址：<a href="http://www.bdstarlbs.com" target="_blank">http://www.bdstarlbs.com</a>
+                    </p>
+                </div>
+                <div id="sysPicLink">
+                    <img src="images/weibo.jpg" title="北斗星通官方微博" style="width: 100px; height: 100px;" />
+                    <img src="images/weixin.jpg" title="北斗星通官方微信" style="width: 100px; height: 100px;" />
+                </div>
+            </div>
+        </div>
+        
+        <div title="详情" showheader='false' region="south" class="southZIndex" height="200px"
+            expanded="false" showspliticon="true">
+            <div id="tabMain" onbeforecloseclick="curIndex.tabMainCloseHandler(e)" onactivechanged="curIndex.tabMainActiveChangeHandler(e)"
+                class="mini-tabs" activeindex="0" style="height: 100%;">
+                
+                <div title="实时位置">
+                    <div id="dgLastInfo" onrowclick="curIndex.dgLastInfoHandler(e)" class="mini-datagrid"
+                        style="height: 100%" allowresize="true" idfield="id" multiselect="false">
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <!--<div field="ownType" width="10" headeralign="center" align='center'>
+                                目标类型</div> -->
+                            <div field="sim" width="10" headeralign="center" align='center' visible='false'>
+                                SIM卡</div>
+                            <div field="time" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                定位时间</div>
+                            <div field="velocity" width="10" headeralign="center" align='center'>
+                                速度(KM/H)</div>
+                            <div field="dir" width="10" headeralign="center" align='center'>
+                                方向(度)</div>
+                            <div field="longitude" width="10" headeralign="center" align='center'>
+                                经度</div>
+                            <div field="latitude" width="10" headeralign="center" align='center'>
+                                纬度</div>
+                            <div field="isonline" width="10" headeralign="center" align='center' visible='false'>
+                                是否在线</div>
+                            <div field="isonlineDesc" width="10" headeralign="center" align='center'>
+                                终端状态</div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div title="实时状态">
+                    <div id="dgLastState" onrowclick="curIndex.dgLastStateHandler(e)" class="mini-datagrid"
+                        style="height: 100%" allowresize="true" idfield="id" multiselect="false">
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <div field="sim" width="10" headeralign="center" align='center' visible='false'>
+                                SIM卡</div>
+                            <div field="time" width="14" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                状态时间</div>
+                            <div field="longitude" width="10" headeralign="center" align='center'>
+                                经度</div>
+                            <div field="latitude" width="10" headeralign="center" align='center'>
+                                纬度</div>
+                            <div field="busErr" width="10" headeralign="center" align='center'>
+                                总线状态</div>
+                            <div field="GNSSErr" width="10" headeralign="center" align='center'>
+                                GNSS模块状态</div>
+                            <div field="ACCOpen" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                ACC状态</div>
+                            <div field="BDStatus" width="10" headeralign="center" align='center'>
+                                北斗信号状态</div>
+                            <div field="GPSStatus" width="10" headeralign="center" align='center'>
+                                GPS信号状态</div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div title="实时警情">
+                    <div id="dgAlarmInfo" onrowclick="curIndex.dgAlarmInfoHandler(e)" class="mini-datagrid"
+                        style="height: 100%" allowresize="true" idfield="id" multiselect="false">
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <div field="sim" width="10" headeralign="center" align='center' visible='false'>
+                                SIM卡</div>
+                            <div field="time" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                报警时间</div>
+                            <div field="longitude" width="8" headeralign="center" align='center'>
+                                经度</div>
+                            <div field="latitude" width="8" headeralign="center" align='center'>
+                                纬度</div>
+                            <div field="alarmType" width="20" headeralign="center" align='center'>
+                                报警类型</div>
+                            <div field="StatusDesc" width="20" headeralign="center" align='center'>
+                                状态信息</div>
+                            
+                        </div>
+                    </div>
+                </div>
+                
+                <div title="历史状态" name="tabHistoryState" showclosebutton='true' visible='false'>
+                    <div id="dgHistoryState" onrowclick="curIndex.dgHistoryStateHandler(e)" url="actions/get_historic_status.ashx"
+                        class="mini-datagrid" style="height: 100%" allowresize="true" idfield="id" multiselect="false"
+                        showpager='false'>
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <div field="sim" width="10" headeralign="center" align='center' visible='false'>
+                                SIM卡</div>
+                            <div field="time" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                状态时间</div>
+                            <div field="longitude" width="10" headeralign="center" align='center'>
+                                经度</div>
+                            <div field="latitude" width="10" headeralign="center" align='center'>
+                                纬度</div>
+                            <div field="busErr" width="10" headeralign="center" align='center'>
+                                总线状态</div>
+                            <div field="GNSSErr" width="10" headeralign="center" align='center'>
+                                GNSS模块状态</div>
+                            <div field="ACCOpen" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                ACC状态</div>
+                            <div field="BDStatus" width="10" headeralign="center" align='center'>
+                                北斗信号状态</div>
+                            <div field="GPSStatus" width="10" headeralign="center" align='center'>
+                                GPS信号状态</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div title="历史报警" name="tabHistoryAlarm" showclosebutton='true' visible='false'>
+                    <div id="dgHistoryAlarm" onrowclick="curIndex.dgHistoryAlarmHandler(e)" url="actions/get_historic_alarm.ashx"
+                        class="mini-datagrid" style="height: 100%" allowresize="true" idfield="id" multiselect="false"
+                        showpager='false'>
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center' visible='false'>
+                                目标号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <div field="sim" width="10" headeralign="center" align='center' visible='false'>
+                                SIM卡</div>
+                            <div field="time" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                报警时间</div>
+                            <div field="longitude" width="8" headeralign="center" align='center'>
+                                经度</div>
+                            <div field="latitude" width="8" headeralign="center" align='center'>
+                                纬度</div>
+                            <div field="alarmType" width="20" headeralign="center" align='center'>
+                                报警类型</div>
+                            <div field="StatusDesc" width="20" headeralign="center" align='center'>
+                                状态信息</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div name="tabSearchInfo" showclosebutton='true' title="区域查车" visible='false'>
+                    <div id="dgSearchInfo" onrowclick="curIndex.dgSearchInfoHandler(e)" class="mini-datagrid"
+                        style="height: 100%" allowresize="true" idfield="id" multiselect="false" showpager='false'>
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <div field="sim" width="10" headeralign="center" align='center' visible='false'>
+                                SIM卡</div>
+                            <div field="time" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                定位时间</div>
+                            <div field="longitude" width="10" headeralign="center" align='center'>
+                                经度</div>
+                            <div field="latitude" width="10" headeralign="center" align='center'>
+                                纬度</div>
+                            <div field="velocity" width="10" headeralign="center" align='center'>
+                                速度(KM/H)</div>
+                            <div field="dir" width="10" headeralign="center" align='center'>
+                                方向(度)</div>
+                            <div field="isonline" width="10" headeralign="center" align='center'>
+                                是否在线</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div name="tabTrackInfo" showclosebutton='true' title="轨迹信息" visible='false'>
+                    <div id="dgTrackInfo" class="mini-datagrid" style="height: 100%" allowresize="true"
+                        idfield="id" multiselect="false" showpager='false'>
+                        <div property="columns">
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                终端号</div>
+                            <div field="velocity" width="10" headeralign="center" align='center'>
+                                速度(KM/H)</div>
+                            <div field="dir" width="10" headeralign="center" align='center'>
+                                方向(度)</div>
+                            <div field="time" width="10" headeralign="center" align='center'>
+                                位置时间</div>
+                            <div field="address" width="10" headeralign="center" align='center'>
+                                地址</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div name="tabTrackWJInfo" showclosebutton='true' title="尾迹信息" visible='false'>
+                    <div id="dgTrackWJInfo" class="mini-datagrid" style="height: 100%" allowresize="true"
+                        idfield="id" multiselect="false" showpager='false'>
+                        <div property="columns">
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                终端号</div>
+                            <div field="address" width="10" headeralign="center" align='center'>
+                                地址</div>
+                            <div field="velocity" width="10" headeralign="center" align='center'>
+                                速度(KM/H)</div>
+                            <div field="dir" width="10" headeralign="center" align='center'>
+                                方向(度)</div>
+                            <div field="time" width="10" headeralign="center" align='center'>
+                                位置时间</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div name="tabTargetSearchInfo" showclosebutton='true' title="目标搜索" visible='false'>
+                    <div id="dgTargetSearchInfo" onrowclick="curIndex.dgTargetSearchInfoHandler(e)" class="mini-datagrid"
+                        style="height: 100%" allowresize="true" idfield="id" multiselect="false" showpager='false'>
+                        <div property="columns">
+                            <div field="id" width="10" headeralign="center" align='center' visible='false'>
+                                编号</div>
+                            <div field="targetnumber" width="10" headeralign="center" align='center'>
+                                目标号</div>
+                            <div field="sim" width="10" headeralign="center" align='center'>
+                                SIM卡</div>
+                            <div field="time" width="10" headeralign="center" dateformat="yyyy-MM-dd hh:mm:ss"
+                                align='center'>
+                                定位时间</div>
+                            <div field="velocity" width="10" headeralign="center" align='center'>
+                                速度(KM/H)</div>
+                            <div field="dir" width="10" headeralign="center" align='center'>
+                                方向(度)</div>
+                            <div field="isonline" width="10" headeralign="center" align='center'>
+                                是否在线</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+    var serverInfo = {
+        userInfo:{
+            'userId': "408",
+            'userName': "wdjt",
+            'userType': 0
+        },
+        configParam: {
+            'popupInterval': parseInt("180000"),
+            'isShowOffline': parseInt("1"),
+            'isShowTargetName': parseInt("1"),
+            'isFirst': parseInt("0")      
+        },
+        UserConfigParam: {
+            'isOnlineSpan': parseInt("24"),
+            'baojingduqufazhi': parseInt("1"),
+            'xianshi_lixianzhongduan': parseInt("1"),
+            'xianshi_zhongduanmingcheng': parseInt("1"),
+            'weijigeshu': parseInt("50"),
+            'zuidashijianjiange': parseInt("7"),
+            'guijihuifang_pingbiyichangwei': parseInt("1"),
+            'ditushuaxinshijianjiange': parseInt("180"),    
+            'isShowTag': parseInt("1"),       
+        }
+    };
+
+    window.curIndex = Index; //切换百度、天地图时候使用
+    mini.parse();
+    curIndex.init();
+   
+</script>
+<script type="text/javascript" src="js/switch.js"></script>
+<script type="text/javascript" src="js/tipInfomation.js"></script>
+<script type="text/javascript" src="js/crack.js"></script>
+<script type="text/javascript" src="js/hack.js"></script>
+</html>

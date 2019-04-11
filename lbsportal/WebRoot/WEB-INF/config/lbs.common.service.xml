@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<!-- common_smsMessageSender -->
+    <bean id="common_meiShenSmsSender" class="com.app.lbs.common.sms.qxt.MeiShenSmsSender" ></bean>
+
+    <!-- Common Service Extend -->
+    <bean id="common_commonServiceEx" class="com.app.lbs.common.service.CommonServiceEx">
+        <property name="commonDao" ref="common_commonDaoEx" />
+    </bean>
+
+    <!-- common_sequenceService
+    <bean id="common_sequenceService" class="com.app.lbs.common.service.pub.impl.SequenceServiceImpl"
+        init-method="initialize"
+        parent="common_commonServiceEx">
+    </bean>
+     -->
+
+	<!-- common_codeDataService -->
+    <bean id="common_codeDataService" class="com.app.lbs.common.service.pub.impl.CodeDataServiceImpl"
+        init-method="initialize"
+        parent="common_commonServiceEx">
+    </bean>
+    
+	<!-- common_pub_TerminalInfoService -->
+    <bean id="common_pub_TerminalInfoService" class="com.app.lbs.common.service.pub.impl.TerminalInfoServiceImpl"
+        parent="common_commonServiceEx">
+    </bean>
+    
+
+	<!-- common_webCommonService -->
+    <bean id="common_webCommonService" class="com.app.lbs.common.web.service.impl.WebCommonServiceImpl"
+        parent="common_commonServiceEx">
+        <property name="codeDataService" ref="common_codeDataService" />
+    </bean>
+
+    <!-- common_webCommonService -->
+    <bean id="common_webWidgetService" class="com.app.lbs.common.web.service.impl.WebWidgetServiceImpl"
+        parent="common_webCommonService">
+    </bean>
+
+</beans>

@@ -1,0 +1,164 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+<title>智能定位管理平台</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<link rel="shortcut icon" type="image/x-icon" href="images/favicon.ico" />
+<!-- Le styles -->
+<link href="assets/jqbootstrap/css/bootstrap.min.css" rel="stylesheet">
+<!-- 
+<link href="assets/jqbootstrap/css/custom-theme/jquery-ui-1.10.0.custom.css" type="text/css" rel="stylesheet" />
+ -->
+<link href="assets/jqbootstrap/css/font-awesome.min.css" type="text/css" rel="stylesheet" />
+<!--[if IE 7]>
+<link href="assets/jqbootstrap/css/font-awesome-ie7.min.css" rel="stylesheet" >
+<![endif]-->
+<!--[if lt IE 9]>
+<link href="assets/jqbootstrap/css/custom-theme/jquery.ui.1.10.0.ie.css" rel="stylesheet" type="text/css" />
+<![endif]-->
+<link href="assets/jqbootstrap/js/google-code-prettify/prettify.css" rel="stylesheet">
+<!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+<!--[if lt IE 9]>
+<script src="assets/jqbootstrap/js/html5shim.js"></script>
+<![endif]-->
+
+<style type="text/css">
+
+#login-panel {
+	position: relative;
+	/* width: 516px; */
+    width: 484px;
+	margin: 0px auto;
+	padding:0px;
+	text-align: center;
+    -moz-box-shadow: 3px 3px 5px #aaa;
+    -webkit-box-shadow: 3px 3px 5px #aaa;
+    box-shadow: 3px 3px 5px #aaa;
+    /* For IE 8 */
+    -ms-filter: "progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#aaa')";
+    /* For IE 5.5 - 7 */
+    filter: progid:DXImageTransform.Microsoft.Shadow(Strength=4, Direction=135, Color='#aaa');
+}
+
+.logo {
+    background-image: url('images/lonher/logo.png');
+    background-repeat: no-repeat;
+    background-position: 40px 10px;
+}
+
+</style>
+</head>
+
+<body style="background-color: #F0F0F0;">
+	<div class="navbar ">
+		<div id="login-panel" class="navbar-inner" >
+			<div>
+                <div class="row logo">
+                    <h3 class="page-header">&nbsp;&nbsp;管理员登录</h3>
+                </div>
+				<div id="msgbox" class="alert alert-error hide" >
+			      	<i class="icon-info-sign"></i><span></span>
+			    </div>
+			      <form>
+					<div class="input-prepend ">
+						<span class="add-on"><i class="icon-user "></i></span>
+				    	<input id="uid" name="uid" class="span2 inp " type="text" placeholder="管理员ID" maxlength="20" />
+				  	</div>
+				  	<div class="input-prepend">
+				    	<span class="add-on"><i class="icon-key "></i></span>
+				    	<input id="password" name="password" class="span2 inp " type="password" placeholder="密码" maxlength="20"/>
+				  	</div>
+				  	<div style="margin: 15px auto;">
+				  		<button id="btn_login" class="btn btn-primary " type="button"><i class="icon-circle-arrow-right"></i> 登录</button>
+				  		<button id="btn_reset" class="btn " type="button"><i class="icon-trash"></i> 重置</button>
+				  	</div>
+				  	<div>
+				  		<ul class="icons" >
+				  			<li class="alert alert-info" style="padding: 10px;"><i class="icon-info-sign"></i> 为获取最佳效果，建议使用Chrome或者Firefox浏览器。</li>
+				  		</ul>
+				  	</div>
+			    </form>
+			</div>
+		</div>
+	</div>
+</body>
+
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="assets/jqbootstrap/js/jquery-1.9.0.min.js" type="text/javascript"></script>
+<script src="assets/jqbootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+<!-- 
+<script src="assets/jqbootstrap/js/jquery-ui-1.10.0.custom.min.js" type="text/javascript"></script>
+ -->
+<script src="assets/jqbootstrap/js/google-code-prettify/prettify.js" type="text/javascript"></script>
+
+<script src="js/lbs.abc.js" type="text/javascript"></script>
+<script src="js/lbs.consts.js" type="text/javascript"></script>
+<script src="js/lbs.common.js" type="text/javascript"></script>
+
+<!-- business code -->
+<script type="text/javascript">
+
+// page index
+var p_index = {};
+
+// show error message box
+p_index.showError = function(msg, show) {
+	$("#msgbox").find("span").html(msg);
+	$("#msgbox").show();
+};
+
+
+// do login
+p_index.doLogin = function() {
+	if (lbs.common.isTrimEmpty($("#uid").val())) {
+		p_index.showError("用户名不能为空！");
+		$("#uid").focus();
+		return;
+	}
+	if (lbs.common.isTrimEmpty($("#password").val())) {
+		p_index.showError("密码不能为空！");
+		$("#password").focus();
+		return;
+	}
+	
+	$("#msgbox").hide();
+
+	var cb = function(text) {
+		var json = $.parseJSON(text);
+		top.location = json.forward;
+	};
+	var err_cb = function(text) {
+		var json = $.parseJSON(text);
+		var msgs = '';
+        for (var i = 0; i < json.errorMsgs.length; i++) {
+            msgs += json.errorMsgs[i] + '\n';
+        }
+        p_index.showError(msgs);
+	};
+
+	// submit
+	lbs.common.ajax("portal/login.shtm?login_type=2", $("form:first").serialize(), cb, err_cb);
+	cb = null;
+	err_cb = null;
+};
+
+
+// reset margin-top
+$("#login-panel").css("margin-top", ($(document).height() - $("#login-panel").height()) * (1 - 0.618) + "px");
+$("#uid").focus();
+
+// login
+$("#btn_login").click(function() { p_index.doLogin(); });
+// password keyup
+$("#password").keyup(function(ev) { if (ev.keyCode == 13) { p_index.doLogin(); } });
+
+// reset
+$("#btn_reset").click(function() {
+	$("#uid,#password").val("");
+	$("#uid").focus();
+});
+
+</script>
+
+</html>
+

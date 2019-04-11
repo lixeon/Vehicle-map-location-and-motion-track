@@ -1,0 +1,22 @@
+// Name Space for LBS System
+// utils
+Ext.ns('lbs.U');
+// global
+Ext.ns('lbs.G');
+// Constant
+Ext.ns('lbs.C');
+
+
+// required
+lbs.G.required = '<span style="color:red;font-weight:bold" data-qtip="Required">*</span>';
+// message title
+lbs.G.MsgTitle = "提示信息";
+
+// code constant key
+lbs.G.CDK = {
+    CD0001 : "CD0001",
+    CDPROVINCE : "CDPROVINCE",
+    CDCITY : "CDCITY"
+    CDTYPE : "CDTYPE"
+};
+

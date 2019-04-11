@@ -1,0 +1,105 @@
+
+/**
+ * Console
+ * 
+ * opts: {elmId, maxLen, level}
+ */
+vp.t.console = function(opts) {
+	// message level
+	var _LEVEL = {debug: 0, info: 1, warn: 2, error: 3};
+	var _COLOR = ["#000000", "#0000ff", "#ff6600", "#ff0000"];
+
+	// store options
+	var _panel = $("#" + opts.elmId);
+	var _maxlen = opts.maxLen || 200;
+	var _level = _LEVEL[opts.level] || _LEVEL.debug;
+	
+	// get now time
+	var _now = function() {
+		var now = new Date();
+		var t = now.getHours();
+		var h = (t < 10) ? ('0' + t) : '' + t;
+		t = now.getMinutes();
+		var m = (t < 10) ? ('0' + t) : '' + t;
+		t = now.getSeconds();
+		var s = (t < 10) ? ('0' + t) : '' + t;
+		t = "[ " + h + ":" + m + ":" + s + " ]";
+		return t;
+	};
+
+	// print message
+	var _print = function(v, level) {
+		var children = $(_panel).children();
+		var curlen = children.length;
+		if (curlen == _maxlen) {
+			children.last().remove();
+		}
+		var msg = '<div style="color:' + _COLOR[level] + '">' + _now() + '&nbsp;:&nbsp;' + v + '</div>';
+		//alert(msg);
+		if (curlen == 0) {
+			$(_panel).append(msg);
+		} else {
+			$(children.first()).before(msg);
+		}
+	};
+
+	// clear message box
+	this.clear = function() {
+		$(_panel).empty();
+	};
+	
+	this.debug = function(v) {
+		if (_LEVEL.debug == _level) {
+			_print(v, _LEVEL.debug);
+		}
+	};
+	
+	this.info = function(v) {
+		if (_LEVEL.info >= _level) {
+			_print(v, _LEVEL.info);
+		}
+	};
+	
+	this.warn = function(v) {
+		if (_LEVEL.warn >= _level) {
+			_print(v, _LEVEL.warn);
+		}
+	};
+	
+	this.error = function(v) {
+		if (_LEVEL.error >= _level) {
+			_print(v, _LEVEL.error);
+		}
+	};
+};
+
+
+/**
+ * Clock
+ *
+ * d:yyyyMMddhhmmss
+ */
+vp.t.clock = function(d) {
+	// server time
+	var svrdate = (new Date(d.substring(0, 4),
+        parseInt(d.substring(4, 6)) - 1,
+        d.substring(6, 8),
+        d.substring(8, 10),
+        d.substring(10, 12),
+        d.substring(12))).getTime();
+
+	// compute time gap
+    var _dt = svrdate - (new Date()).getTime();
+
+    // get now time with hh:mm format.
+	this.getCurHHmm = function() {
+		var csvrdate = new Date((new Date()).getTime() + _dt);
+        var t = csvrdate.getHours();
+        var h = (t < 10) ? ('0' + t) : '' + t;
+        t = csvrdate.getMinutes();
+        var m = (t < 10) ? ('0' + t) : '' + t;
+        return h + ":" +m;
+	};
+};
+
+

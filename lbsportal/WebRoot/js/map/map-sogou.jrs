@@ -1,0 +1,218 @@
+/**
+ * sogo map
+ */
+(function() {
+    
+    // constant
+    var _C_DISP_LEVEL = 13;
+
+    // map id
+    var _map_id = "map_canvas";
+    var _map_toolbar_id = "panel_map_toolbar";
+
+    // map object
+    var _map_obj = null;
+    var _map_ruler = null;
+    
+    // map overlays
+    var _map_overlay_holder = {};
+    
+    var _converter = null;
+
+    
+    /**
+     * Map init callback
+     */
+    var _mapInitedCallback = function() {
+    	// TODO
+    };
+
+    /**
+     * initialize
+     */
+    function init(opts) {
+    	// map panel id, map toolbar panel id
+        _map_id = opts.panelId;
+        _map_toolbar_id = opts.toolbarId;
+        
+        var mapW = $(window).width() - 1 * 2;
+        var mapH = $(window).height() - $("#panel_header").height() - 2 * 2;
+
+        // reset map view size
+        $("#" + _map_id).css({"height": mapH + "px", "width": mapW + "px"});
+        $("#" + _map_toolbar_id).css({"margin-left": (mapW * 0.618) - 40 * 4 + "px"});
+        $("#" + _map_toolbar_id).show();
+        
+        var options = {
+            zoom : opts.zoom || _C_DISP_LEVEL,
+            center : new sogou.maps.LatLng(parseFloat(vp.v.city_clat), parseFloat(vp.v.city_clng)),
+            mapTypeId : sogou.maps.MapTypeId.ROADMAP,
+            /* hdMap: true, */
+            mapControlType : 1,
+            callback: _mapInitedCallback
+        };
+
+        // map object
+        _map_obj = new sogou.maps.Map(document.getElementById(_map_id), options);
+        // map ruler
+        _map_ruler = new Ruler({'map': _map_obj});
+        
+        // measure distance
+        $("#btn_map_measuredistance").click(function() {
+            _map_ruler.open();
+        });
+
+        // converter
+        _converter = new sogou.maps.Convertor();
+    }
+    
+    
+    /**
+     * add Marker
+     * 
+     * @param opts {mkid:string, imgUrl:string, name:string, x:number, y:number, center:boolean, inView: boolean}
+     */
+    function addMarker(opts) {
+
+        // remove old marker
+        removeMarker(opts.mkid);
+        
+        var pos = new sogou.maps.LatLng(opts.y, opts.x);
+        
+        var marker = new sogou.maps.Marker({
+            id: '#MM' + opts.mkid,
+            map: _map_obj,
+            position: pos,
+            label: { visible: true, align: "RIGHT" },
+            title: opts.name,
+            icon: (opts.icon) ? opts.icon : ""
+        });
+        
+        if (opts.center) {
+            _map_obj.panTo(pos);
+        } else if (opts.inView) {
+            var sgp = _converter.toSogou(pos);
+            var bounds = _map_obj.getBounds();
+            if (!bounds.contains(sgp)) {
+                _map_obj.panTo(pos);
+            }
+        }
+        
+        if (opts.infoWin) {
+        	var infowindow = new sogou.maps.InfoWindow({
+        		content: opts.infoWin.content
+        	});
+        	infowindow.setTitle(opts.infoWin.title);
+        	sogou.maps.event.addListener(marker, opts.infoWin.action, function() {
+        		infowindow.open(_map_obj, marker);
+        	});
+        }
+
+        // hold
+        _map_overlay_holder['#MM' + opts.mkid] = marker;
+    }
+    
+
+    /**
+     * remove marker
+     */
+    function removeMarker(id) {
+        var ol = _map_overlay_holder["#MM" + id];
+        if (ol != null) {
+            ol.setMap(null);
+            _map_overlay_holder['#MM' + id] = null;
+        }
+    }
+    
+    
+    /**
+     * Add Line
+     *
+     * @param opts {lid:string, xs:array, ys:array, color:string}
+     */
+    function addLine(opts) {
+        
+        var points = [];
+        for (var i = 0; i < opts.xs.length; i++) {
+            points.push(new sogou.maps.LatLng(parseFloat(opts.ys[i]), parseFloat(opts.xs[i])));
+        }
+
+        var line = new sogou.maps.Polyline({
+            id: "#ML" + opts.lid,
+            map: _map_obj,
+            path: points,
+            //style: lineStyle
+            strokeColor: opts.color || "#0000ff",
+            strokeOpacity: 0.75,
+            strokeWeight: 4
+        });
+
+        // hold
+        _map_overlay_holder['#ML' + opts.lid] = line;
+    }
+
+
+    /**
+     * remove line
+     *
+     * @param id line id
+     */
+    function removeLine(id) {
+        var ol = _map_overlay_holder["#ML" + id];
+        if (ol != null) {
+            ol.setMap(null);
+            _map_overlay_holder['#ML' + id] = null;
+        }
+    }
+
+
+    /**
+     * resize
+     */
+    function resize(mapW, mapH) {
+        // reset map view size
+        $("#" + _map_id).css({"height": mapH + "px", "width": mapW + "px"});
+        $("#" + _map_toolbar_id).css({"margin-left": (mapW * 0.618) - 40 * 4 + "px"});
+    }
+    
+    
+    /**
+     * Map configuration
+     */
+    function config(key, value) {
+        if (key == 'zoom') {
+            if (value == undefined) {
+                return _map_obj.getZoom();
+            } else {
+                _map_obj.setZoom(value);
+            }
+        }
+    }
+
+
+    /**
+     * get map size
+     */
+    function getMapBounds() {
+    	var bounds = _map_obj.getBounds();
+    	var myBounds = {
+    		swx : bounds.getSouthWest().x,
+    		swy : bounds.getSouthWest().y,
+    		nex : bounds.getNorthEast().x,
+    		ney : bounds.getNorthEast().y
+    	};
+    	return myBounds;
+    };
+
+    
+    // export
+    vp.m.init = init;
+    vp.m.resize = resize;
+    vp.m.showLoc = addMarker;
+    vp.m.removeMark = removeMarker;
+    vp.m.drawLine = addLine;
+    vp.m.removeLine = removeLine;
+    vp.m.mapConfig = config;
+    vp.m.getMapBounds = getMapBounds;
+
+})();

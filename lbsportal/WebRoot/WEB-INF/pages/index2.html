@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>jquery顶部固定层下拉导航 - 站长素材</title>
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript"  src="js/nav.js"></script>
+</head>
+<body>
+
+		<div class="nav_z">
+			<ul id="navul" class="cl">
+				<li>
+					<a href="#"><span><img src="http://www.beidouguard.com:6010/js/lib/miniui/themes/icons/7.png"/> </span><span>菜单1</span></a>
+				</li>
+				<!-- 有下拉菜单的菜单项 文字span元素要加上 arrow类 -->
+				<li>
+					<a href="#"><span><img src="http://www.beidouguard.com:6010/js/lib/miniui/themes/icons/7.png"/> </span><span class="arrow">菜单2</span></a>
+					<ul>
+						<li><a href="#">菜单2-1</a></li>
+						<li><a href="#">菜单2-2</a></li>
+						<li><a href="#">菜单2-3</a></li>
+					</ul>
+				</li>
+
+			</ul>
+		</div><!--导航结束-->
+		<script  type="text/javascript">
+		$(".navbg").capacityFixed();
+		</script>
+
+</body>
+</html>

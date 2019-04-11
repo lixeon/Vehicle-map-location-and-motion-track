@@ -1,0 +1,120 @@
+// single track
+(function() {
+	var _MK_PREFIX = "mk";
+    var _GET_GAP = 1000 * 5;
+    var _MAX_GET = 3;
+    
+    var _tid = null;
+    var _tname = null;
+    var _send_time = "";
+    var _get_counter = 1;
+    var _getting = false;
+    
+    /**
+     * opts {tid:string, tname:string}
+     */
+    var track = function(opts) {
+        if (_getting == true) {
+            vp.v.log.warn("正在定位，请稍后！");
+            return;
+        }
+        
+        vp.v.log.info("正在下发定位指令...");
+        _tid = opts.tid;
+        _tname = opts.tname;
+        _get_counter = 1;
+        _getting = true;
+        // remove mark
+        vp.m.removeMark(_MK_PREFIX + _tid);
+        
+        var cb = function(text) {
+            vp.v.log.info("定位指令发送成功！");
+            _send_time = $.parseJSON(text).sendTime;
+            setTimeout(_getPosition, _GET_GAP);
+        };
+
+        var err_cb = function(text) {
+            var json = $.parseJSON(text);
+            var msgs = '';
+            for (var i = 0; i < json.errorMsgs.length; i++) {
+                msgs += json.errorMsgs[i] + '\n';
+            }
+            // print message
+            vp.v.log.error(msgs);
+            
+            alert(msgs);
+            
+            _getting = false;
+        };
+        
+        // send command
+        lbs.common.ajax("portal/send_locate_cmd.shtm", {
+            terminalId: opts.tid
+        }, cb, err_cb);
+        cb = null;
+    };
+    
+    var _getPosition = function() {
+        vp.v.log.info("正在获取位置（第" + _get_counter + "次）...");
+        _get_counter = _get_counter + 1;
+        var cb = function(text) {
+            var got = false;
+            try {
+                var json = $.parseJSON(text);
+                var locInf = json.locs;
+                
+                // filter block locate
+                if (!$("#chk_show_blogloc")[0].checked) {
+                    lbs.common.filterBlogLoc(locInf);
+                }
+
+                if (!lbs.common.isEmptyList(locInf.poss)) {
+                    vp.v.log.info("获取位置成功!");
+                    _getting = false;
+                    
+                    var p = locInf.poss[locInf.poss.length - 1];
+                    // show location desc
+                    vp.v.cur_terminal.posChanged(p);
+                    
+                    var params = {
+                        mkid: _MK_PREFIX + _tid,
+                        name: _tname,
+                        imgUrl: lbs.consts.PIMG.SINGLE,
+                        x: p.lng,
+                        y: p.lat,
+                        center: true
+                    };
+                    
+                    // show on map
+                    vp.m.showLoc(params);
+                    
+                    got = true;
+                }
+            } finally {
+                if (got) {
+                    _getting = false;
+                } else {
+                    if (_get_counter <= _MAX_GET) {
+                        setTimeout(_getPosition, _GET_GAP);
+                    } else {
+                        _getting = false;
+                        vp.v.log.error("位置获取失败，请尝试重新定位！");
+                    }
+                }
+            }
+        };
+        
+        // get position
+        lbs.common.ajax("portal/get_latest_trace.shtm", {
+            terminalId: _tid,
+            lastTime: _send_time
+        }, cb);
+        cb = null;
+        err_cb = null;
+    };
+    
+    // export
+    vp.page.single_track = {};
+    vp.page.single_track.track = track;
+})();
+

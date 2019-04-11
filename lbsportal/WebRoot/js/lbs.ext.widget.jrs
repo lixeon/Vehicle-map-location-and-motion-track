@@ -1,0 +1,49 @@
+/**
+ * Self define EXT Widgets
+ */
+
+// Remote data Combo box
+Ext.define("Ext.ux.form.field.ComboBox", {
+    extend: "Ext.form.field.ComboBox",
+    alias: ["widget.uXcombo"],
+    comboOpts: {
+        autoLoad: true
+    },
+    queryMode: 'remote',
+    valueField: "value",
+    displayField: "full_name",
+    editable: false,
+
+    // Override initComponent
+    initComponent: function() {
+    	// create a new store for this combo box
+    	var me = this;
+    	me.store = Ext.create("Ext.data.Store", {
+    		fields: [
+                 {name:"code_id", type:"string"},
+                 {name:"value", type:"string"},
+                 {name:"full_name", type:"string"},
+                 {name:"abbr_name", type:"string"},
+                 {name:"sort_no", type:"int"}
+             ],
+             proxy: {
+            	 type: "ajax",
+            	 extraParams: me.comboOpts,
+            	 url: "common/combo.shtm",
+            	 reader: {
+            		 root: "comboDataList"
+            	 }
+             },
+             autoLoad: me.comboOpts.autoLoad
+    	});
+
+    	// reset show type
+    	if (me.comboOpts.showType == "abbr") {
+    		me.displayField = "abbr_name";
+    	}
+
+    	// call super
+        Ext.ux.form.field.ComboBox.superclass.initComponent.call(this);
+    }
+});
+

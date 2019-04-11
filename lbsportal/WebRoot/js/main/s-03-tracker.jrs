@@ -1,0 +1,189 @@
+
+
+// track manager
+vp.page.tracker_manager = {
+    _list : {},
+
+	startTrack : function(opts) {
+		var tracker = vp.page.tracker_manager._list[opts.tid];
+		if (lbs.common.isEmpty(tracker)) {
+			tracker = new vp.task.tracker(opts);
+			tracker.start(opts.notCmd);
+			// hold
+			vp.page.tracker_manager._list[opts.tid] = tracker;
+		} else {
+			if (!tracker.isRun()) {
+				tracker.start(opts.notCmd);
+			}
+		}
+
+		// update status ON
+		vp.v.cur_terminal.statusChanged({
+            trace: lbs.consts.codemap.track.ON
+        });
+    },
+
+    stopTrack : function(opts) {
+    	var tracker = vp.page.tracker_manager._list[opts.tid];
+		if (!lbs.common.isEmpty(tracker) && tracker.isRun()) {
+			tracker.stop();
+		}
+
+		// update status ON
+        vp.v.cur_terminal.statusChanged({
+            trace: lbs.consts.codemap.track.OFF
+        });
+    },
+
+    clearTrace: function(opts) {
+        var tracker = vp.page.tracker_manager._list[opts.tid];
+        if (!lbs.common.isEmpty(tracker)) {
+            // remove line
+            for (var i = 0; i < tracker.getPoss().length; i++) {
+                vp.m.removeLine(("tk_line_" + opts.tid) + i);
+            }
+            // remove mark
+            vp.m.removeMark("tk_marker_" + opts.tid);
+        }
+    }
+};
+
+
+/**
+ * Tracker
+ *
+ * @param opts { tid, name }
+ */
+vp.task.tracker = function(opts) {
+	var _MK_PREFIX = "mk";
+
+	// locate duration
+	var LOC_DURATION = 1000 * 14;
+
+	// terminal serial no
+	var terminalId = opts.tid;
+	var name = opts.name;
+	var lastTime = null;
+
+	var mkCarId = _MK_PREFIX + terminalId;
+	var lineId = "tk_line_" + terminalId;
+    
+    var _p_idx = 0;
+    var _last_pos = null;
+	
+	var mainTimer = null;
+	var isRunning = false;
+	
+
+    // position cache
+	var _poss_cache = [];
+
+	
+	// get latest position
+	var getPosition = function() {
+		var callback = function(text) {
+			try {
+				var locs = $.parseJSON(text).locs;
+				
+	            // filter blogloc
+	            if (!$("#chk_show_blogloc")[0].checked) {
+	                lbs.common.filterBlogLoc(locs);
+	            }
+
+				if (!lbs.common.isEmptyList(locs.poss)) {
+					lastTime = locs.lastTime;
+
+					// hold
+					_poss_cache = _poss_cache.concat(locs.poss);
+
+					// draw line
+					if (_poss_cache.length > 1) {
+					    var pos = null;
+					    if (_last_pos == null) {
+					        _last_pos = _poss_cache[0];
+					        for (var i = 1; i < _poss_cache.length; i++) {
+					            pos = _poss_cache[i];
+					            vp.m.drawLine({
+					                lid: lineId + (_p_idx++),
+					                xs: [_last_pos.lng, pos.lng],
+					                ys: [_last_pos.lat, pos.lat],
+					                color: lbs.common.getLineColor(pos.speed)
+					            });
+					            _last_pos = pos;
+					        }
+					    } else {
+					        for (var i = 0; i < locs.poss.length; i++) {
+                                pos = locs.poss[i];
+                                vp.m.drawLine({
+                                    lid: lineId + (_p_idx++),
+                                    xs: [_last_pos.lng, pos.lng],
+                                    ys: [_last_pos.lat, pos.lat],
+                                    color: lbs.common.getLineColor(pos.speed)
+                                });
+                                _last_pos = pos;
+                            }
+					    }
+					} else if (_poss_cache.length == 1) {
+						_last_pos = _poss_cache[0];
+					}
+					
+					vp.m.showLoc({
+					    mkid: mkCarId,
+					    name: name,
+					    imgUrl: lbs.consts.PIMG.TRACK,
+					    x: _last_pos.lng,
+					    y: _last_pos.lat,
+					    inView: true
+					});
+
+					// show location desc
+                    vp.v.cur_terminal.posChanged(_last_pos);
+				}
+			} finally {
+				if (isRunning) {
+					setTimeout(getPosition, LOC_DURATION);
+				}
+			}
+		};
+
+		// error call back
+		var err_callback = function(text) {
+		};
+
+		// load
+		lbs.common.ajax("portal/get_latest_trace.shtm", {terminalId: terminalId, lastTime: lastTime}, callback, err_callback);
+		callback = null;
+		err_callback = null;
+	};
+
+	this.start = function(notCmd) {
+		started = false;
+		if (notCmd) {
+			isRunning = true;
+			mainTimer = window.setTimeout(getPosition, 1000);
+		} else {
+		    isRunning = true;
+		    mainTimer = window.setTimeout(getPosition, 1000);
+		}
+	};
+
+	// stop
+	this.stop = function() {
+		isRunning = false;
+		if (mainTimer != null) {
+			window.clearTimeout(mainTimer);
+			mainTimer = null;
+		}
+	};
+	
+	// is running.
+	this.isRun = function() {
+		return isRunning;
+	};
+	
+    this.getPoss = function() {
+        return _poss_cache;
+    };
+
+};
+

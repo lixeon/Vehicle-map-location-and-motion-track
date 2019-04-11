@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+
+<!-- add App-User -->
+<bean id="sql_app_addAppUser" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+                insert into
+                    T_APP_USER (APPUID, MOBILE, NAME, PASSWORD)
+                values (:appuid, :mobile, :name, :password)
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+<!-- get App-User -->
+<bean id="sql_app_getAppUser" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+				select *
+				from T_APP_USER
+				where
+				       MOBILE   = :mobile
+				<[ and PASSWORD = :password ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- get app user list -->
+<bean id="sql_app_queryAppUserList" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+				select
+				     APPUID,
+				     MOBILE,
+				     NAME,
+				     GENDER,
+				     PROVINCE_ID,
+				     CITY_ID,
+				     REMARK,
+				     DATE_FORMAT(LOGIN_DATE, '%Y-%m-%d %T') as LOGIN_DATE,
+				     DATE_FORMAT(CREATE_DATE, '%Y-%m-%d %T') as CREATE_DATE,
+				     DATE_FORMAT(UPDATE_DATE, '%Y-%m-%d %T') as UPDATE_DATE
+				from T_APP_USER
+				where 1=1
+				<[ and MOBILE = :mobile ]>
+				<[ and NAME like :name ]>
+				<[ and GENDER = :gender ]>
+				<[ and PROVINCE_ID = :provinceId ]>
+				<[ and CITY_ID = :cityId ]>
+				<[ and CREATE_DATE >= :createDateSt ]>
+				<[ and CREATE_DATE <= :createDateEt ]>
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- update App-User -->
+<bean id="sql_app_updateAppUser" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+				update
+				    T_APP_USER
+				set
+				 <[ NAME = :name, ]>
+				 <[ PASSWORD = :password, ]>
+				 <[ GENDER = :gender, ]>
+				 <[ PROVINCE_ID = :province, ]>
+				 <[ CITY_ID = :city, ]>
+				 <[ REMARK = :remark, ]>
+				 <[ LOGIN_DATE = :loginDate, ]>
+				    MOBILE = :mobile
+				where
+				    MOBILE = :mobile
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- get owner's terminal -->
+<bean id="sql_app_getTerminalByOwner" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+				select
+				     A.TERMINAL_SERIAL_NO ID,
+				     A.TERMINAL_TYPE TYPE,
+				     A.TERMINAL_NAME NAME,
+				     DATE_FORMAT(A.SERVICE_END_DATE, '%Y-%m-%d') as ENDDATE,
+				     C.VALUE ONLINE
+				from T_TERMINAL A,
+				     T_TERMINAL_CONFIG B,
+				     T_TERMINAL_CONFIG C
+				where
+				     A.TERMINAL_SERIAL_NO = B.TERMINAL_SERIAL_NO
+				 and A.TERMINAL_SERIAL_NO = C.TERMINAL_SERIAL_NO
+		       <[and A.TERMINAL_SERIAL_NO = :terminalSerialNo ]>
+			     and B.CONFIG_KEY = :configKey
+				 and B.VALUE = :ownerTel
+				 and C.CONFIG_KEY = :configKey_login
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+<!-- add app feedback -->
+<bean id="sql_app_addFeedback" class="com.app.platform.base.dao.NamingSql">
+    <constructor-arg index="0">
+        <value>
+            <![CDATA[
+				insert into 
+			    T_APP_FEEDBACK (
+			        MOBILE,
+			        CLIENT_TYPE,
+			        VER,
+			        CONTENT,
+			        EXT_FIELD1,
+			        EXT_FIELD2
+			    )
+                values (
+                    :mobile,
+                    :clientType,
+                    :ver,
+                    :content,
+                    :extField1,
+                    :extField2
+                )
+            ]]>
+        </value>
+    </constructor-arg>
+</bean>
+
+
+</beans>

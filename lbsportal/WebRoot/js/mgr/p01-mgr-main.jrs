@@ -1,0 +1,193 @@
+
+// page load ready
+Ext.onReady(function() {
+
+    // first menu tree
+    var _firstMenuTree = null;
+    
+    // menu item clcik
+    var _mItemClick = function(v, rcd) {
+        if (rcd.raw.leaf == 0 || rcd.raw.leaf == "0") {
+            return;
+        }
+        var menuId = "tbp_" + rcd.raw.menu_id;
+        var tab = Ext.getCmp(menuId);
+        if (tab == null) {
+            tab = Ext.create("Ext.panel.Panel", {
+                id : menuId,
+                title : rcd.raw.text,
+                icon : rcd.raw.icon,
+                closable : true,
+                layout : "fit",
+                loader : {
+                    baseParams : {
+                        menuId : menuId
+                    },
+                    autoLoad : true,
+                    scripts : true,
+                    url : rcd.raw.url
+                }
+            });
+            lbs.G.tabs.add(tab).show();
+        } else {
+            lbs.G.tabs.setActiveTab(tab);
+        }
+    };
+    
+    // draw page
+    var _drawPage = function(initData) {
+        var cookies = document.cookie.split(";");
+        var tmp = null;
+        var uname = "";
+        for ( var i = 0; i < cookies.length; i++) {
+            tmp = cookies[i].split("=");
+            if (Ext.String.trim(tmp[0]) == "uname") {
+                uname = decodeURI(tmp[1]);
+                break;
+            }
+        }
+
+        Ext.getDom("uname").innerHTML = uname;
+
+        // tab panel
+        var mainTabs = Ext.create("Ext.tab.Panel", {
+            region : "center",
+            plain : true,
+            margin : '1 1 1 0',
+            activeTab : 0,
+            layout : "fit",
+            items : [ {
+            	icon : "images/icons/home.png",
+                title : "首页",
+                autoScroll : true,
+                items : [ {
+                    title: "<h1 style='margin-top: 20px' >&nbsp;&nbsp;欢迎使用定位管理平台！</h1>"
+                } ]
+            } ]
+        });
+        // store to global
+        lbs.G.tabs = mainTabs;
+
+        // create items
+        var _createItems = function(item) {
+            var store = Ext.create("Ext.data.TreeStore", {
+                fields : [ { name : "id", type : "string" },
+                           { name : "menu_id", type : "string" },
+                           { name : "icon", type : "string" },
+                           { name : "url", type : "string" },
+                           { name : "text", type : "string" },
+                           { name : "leaf", type : "boolean"}
+                         ],
+
+                proxy : {
+                    type : "ajax",
+                    url : "common/loadmenus.shtm",
+                    reader : {
+                        root : "menus"
+                    }
+                },
+                nodeParam : "parentId",
+                root : {
+                    expanded : true,
+                    id : item.id,
+                    menu_id : item.menu_id,
+                    text : item.text,
+                    icon : item.icon,
+                    url : item.url,
+                    leaf : item.leaf
+                }
+            });
+
+            var treePanel = Ext.create("Ext.tree.Panel", {
+                store : store,
+                region : "center",
+                rootVisible : false,
+                border : false,
+                listeners : {
+                    itemclick : {
+                        fn : _mItemClick
+                    }
+                }
+            });
+            return treePanel;
+        };
+
+        // menu data
+        var topMenuDatas = initData.topMenus;
+        var topMenus = [];
+        for ( var i = 0; i < topMenuDatas.length; i++) {
+            var tree = _createItems(topMenuDatas[i]);
+            if (i == 0) {
+                _firstMenuTree = tree;
+            }
+            var menu1 = Ext.create("Ext.panel.Panel", {
+                title : topMenuDatas[i].text,
+                icon: topMenuDatas[i].icon,
+                layout : "border",
+                items : tree
+            });
+            topMenus.push(menu1);
+        }
+
+        Ext.create("Ext.Viewport", {
+            layout : "border",
+            items : [ {
+                xtype : "box",
+                region : "north",
+                contentEl : "mheader",
+                border : true,
+                height : 50
+            }, {
+                region : "west",
+                icon: "",
+                title : "菜单",
+                border : true,
+                split : true,
+                margins : "1 0 1 1",
+                width : 260,
+                minWidth : 200,
+                maxWidth : 520,
+                collapsible : true,
+                animCollapse : true,
+                layout : "accordion",
+                items : topMenus
+            }, lbs.G.tabs ],
+            renderTo : Ext.getBody()
+        });
+
+        var today = new Date();
+        var fdate = today.getFullYear() + "年";
+        var tVal = today.getMonth() + 1;
+        fdate += ((tVal < 10 ? "0" + tVal : tVal) + "月");
+        tVal = today.getDate();
+        fdate += ((tVal < 10 ? "0" + tVal : tVal) + "日");
+        fdate += " 星期" + [ "日", "一", "二", "三", "四", "五", "六" ][today.getDay()];
+        Ext.getDom("calendar").innerHTML = fdate;
+    };
+
+    // load top menus And Initialize Page
+    Ext.Ajax.request({
+        url : "common/loadinitmenus.shtm",
+        success : function(resp, opts) {
+            var initData = Ext.decode(resp.responseText);
+            _drawPage(initData);
+            if (_firstMenuTree != null) {
+                setTimeout(function() {
+                    _firstMenuTree.getRootNode().expandChildren(true);
+                }, 200);
+            }
+        }
+    });
+
+    // logout
+    Ext.get("link_logout").on('click', function(e) {
+        Ext.Ajax.request({
+            url: 'portal/logout.shtm?type=2',
+            success: function(response, opts) {
+                var json = Ext.decode(response.responseText);
+                top.location.href = lbs.G.basePath + json.forward;
+            }
+        });
+
+    });
+});

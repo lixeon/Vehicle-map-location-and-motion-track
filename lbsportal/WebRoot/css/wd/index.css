@@ -1,0 +1,107 @@
+/**
+ * Ê×Ò³css
+ */
+html, body{
+	width:100%;
+	height:100%;
+	padding:0;
+	margin:0;
+}
+
+#layoutMain{
+	width:100%;
+	height:100%;
+}
+
+#sysName{
+	font-weight:bold;
+	font-size:20px;
+	line-height:55px;
+	padding-left:5px;	
+}
+
+.header {
+	background:url(../images/header.gif) repeat-x 0 -1px;
+}
+
+#divBaiduMap
+{
+	position:absolute;
+	z-index:200;
+	width:100%;
+	height:100%;	
+}
+
+#divTiandiMap
+{
+	position:absolute;
+	z-index:100;
+	width:100%;
+	height:100%;	
+}
+
+.trace_item{	
+	font-size:14px;	
+	text-align:center;
+	padding:0 0 5px 0;
+}
+
+.message_h2,.trace_h2
+{
+	font-size:14px;
+	text-align:center;	
+}
+
+.trace_item a{
+	font-size:14px;
+}
+
+#spanMessageNum, #spanNum,#spanSPSNum,#spanBPSNum,#spanInsureId{
+	color:red;
+	padding: 0 3px;
+}
+
+#targetSearchDel span{
+	color: Red;	
+}
+
+#sysDesc h3{
+	font:"14px Î¢ÈíÑÅºÚ";
+	text-align:center;
+}
+
+#sysDesc p{
+	text-indent:10px;	
+}
+
+#sysPicLink{
+	text-align:center;	
+	margin-top: 20px;
+}
+
+#sysPicLink img{
+	margin: 0 10px;
+}
+
+#tiandiMapInfoWin{
+	width:200px;
+	height:120px;
+}
+#tiandiMapInfoWin .content{
+	border-top: solid 1px gray;	
+	padding: 2px 0;
+}
+
+#tiandiMapInfoWin a{
+	display:inline-block;
+	margin: 0 10px 0 0;
+}
+
+div.westZIndex{
+	z-index:1000;
+	visibility:hidden;
+}
+
+div.southZIndex{
+	z-index:999;
+}

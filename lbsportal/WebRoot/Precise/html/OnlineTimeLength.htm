@@ -1,0 +1,313 @@
+<html><head><meta http-equiv=Content-Type content='text/html; charset=utf-8'></head>
+<script type="text/javascript">
+
+    function onlineTimeLengthbutton(trace_starttime, trace_endtime) {
+        var num = $('#comboonlinetime').combobox("getValue");
+
+        if (trace_starttime.length == 0 || trace_endtime.length == 0) {
+            alert('请设置开始、结束时间!');
+            return;
+        }
+        $.ajax({
+            url: 'ashx/show_onlinetimelength.ashx'/*tpa=http://www.beidouguard.com:6010/Precise/html/ashx/show_onlinetimelength.ashx*/,
+            type: 'GET',
+            data: { num: num, trace_starttime: trace_starttime, trace_endtime: trace_endtime },
+            error: function () { },
+            success: function (data) {
+                if (data == '空' || data == null || data == '' || data.lendth <= 0) {
+                    alert("此终端没有位置点，不进行在线时长计算");
+                    return;
+                }
+          
+                var arr = null;
+                try { eval("arr=" + data) } catch (e) { }
+                //mini.get('Div5').setData(arr);
+
+                var start = 0;
+                var end = 50;
+                var pager = $("#gridonlineTimeLength").datagrid("getPager");
+                $("#gridonlineTimeLength").datagrid("loadData", arr.slice(start, end));
+                pager.pagination({
+                    total: arr.length,
+                    pageNumber: 1,
+                    pageSize: 50,
+                    pageList: [20, 50, 100],
+                    showRefresh: false,
+                    onSelectPage: function (pageNo, pageSize) {
+                        start = (pageNo - 1) * pageSize;
+                        end = start + pageSize;
+                        $("#gridonlineTimeLength").datagrid("loadData", arr.slice(start, end));
+                        pager.pagination('refresh', {
+                            total: arr.length,
+                            pageNumber: pageNo
+                        });
+                    }
+                });
+            }
+        });
+    }
+    function onlineTimeLengthtoday() {
+        var today = document.getElementById("onlineTimeLengthtoday");
+        today.style.color = "#1874CD";
+        var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+        customDiv.style.display = "none";
+
+        var custom = document.getElementById("onlineTimeLengthcustom");
+        custom.style.color = "Black";
+        var yesterday = document.getElementById("onlineTimeLengthyesterday");
+        yesterday.style.color = "Black";
+        var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+        nearlySevenDays.style.color = "Black";
+        var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+        nearlyThirtyDays.style.color = "Black";
+
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var trace_endtime = year + "-" + month + "-" + day;
+        var trace_starttime = year + "-" + month + "-" + day; ;
+        onlineTimeLengthbutton(trace_starttime, trace_endtime);
+
+    }
+    function onlineTimeLengthyesterday() {
+        var yesterday = document.getElementById("onlineTimeLengthyesterday");
+        yesterday.style.color = "#1874CD";
+        var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+        customDiv.style.display = "none";
+
+        var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+        nearlySevenDays.style.color = "Black";
+        var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+        nearlyThirtyDays.style.color = "Black";
+        var today = document.getElementById("onlineTimeLengthtoday");
+        today.style.color = "Black";
+        var custom = document.getElementById("onlineTimeLengthcustom");
+        custom.style.color = "Black";
+
+        var subtracter = 1;
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var oldday = 0;
+        var oldmonth = 0;
+        var oldyear = 0;
+        if (day <= subtracter) {
+            if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 05 || month == 07 || month == 10 || month == 12) {
+                oldday = 30 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 03) {
+                if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                    oldday = 29 - (subtracter - day);
+                }
+                else {
+                    oldday = 28 - (subtracter - day);
+                }
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 02) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year - 1;
+            }
+        } else {
+            oldday = day - subtracter;
+            oldmonth = month;
+            oldyear = year;
+        }
+        var trace_endtime = oldyear + "-" + oldmonth + "-" + oldday;
+        var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+        onlineTimeLengthbutton(trace_starttime, trace_endtime);
+    }
+    function onlineTimeLengthnearlySevenDays() {
+        var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+        nearlySevenDays.style.color = "#1874CD";
+        var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+        customDiv.style.display = "none";
+
+        var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+        nearlyThirtyDays.style.color = "Black";
+        var today = document.getElementById("onlineTimeLengthtoday");
+        today.style.color = "Black";
+        var custom = document.getElementById("onlineTimeLengthcustom");
+        custom.style.color = "Black";
+        var yesterday = document.getElementById("onlineTimeLengthyesterday");
+        yesterday.style.color = "Black";
+
+        var subtracter = 7;
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var oldday = 0;
+        var oldmonth = 0;
+        var oldyear = 0;
+        if (day <= subtracter) {
+            if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 05 || month == 07 || month == 10 || month == 12) {
+                oldday = 30 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 03) {
+                if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                    oldday = 29 - (subtracter - day);
+                }
+                else {
+                    oldday = 28 - (subtracter - day);
+                }
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 02) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year - 1;
+            }
+        } else {
+            oldday = day - subtracter;
+            oldmonth = month;
+            oldyear = year;
+        }
+        var trace_endtime = year + "-" + month + "-" + day;
+        var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+        onlineTimeLengthbutton(trace_starttime, trace_endtime);
+    }
+    function onlineTimeLengthnearlyThirtyDays() {
+        var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+        nearlyThirtyDays.style.color = "#1874CD";
+        var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+        customDiv.style.display = "none";
+
+        var today = document.getElementById("onlineTimeLengthtoday");
+        today.style.color = "Black";
+        var custom = document.getElementById("onlineTimeLengthcustom");
+        custom.style.color = "Black";
+        var yesterday = document.getElementById("onlineTimeLengthyesterday");
+        yesterday.style.color = "Black";
+        var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+        nearlySevenDays.style.color = "Black";
+
+        var subtracter = 30;
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var oldday = 0;
+        var oldmonth = 0;
+        var oldyear = 0;
+        if (day <= subtracter) {
+            if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 05 || month == 07 || month == 10 || month == 12) {
+                oldday = 30 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 03) {
+                if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                    oldday = 29 - (subtracter - day);
+                }
+                else {
+                    oldday = 28 - (subtracter - day);
+                }
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 02) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year - 1;
+            }
+        } else {
+            oldday = day - subtracter;
+            oldmonth = month;
+            oldyear = year;
+        }
+        var trace_endtime = year + "-" + month + "-" + day;
+        var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+        onlineTimeLengthbutton(trace_starttime, trace_endtime);
+    }
+    function onlineTimeLengthCustom() {
+        var custom = document.getElementById("onlineTimeLengthcustom");
+        custom.style.color = "#1874CD";
+        var customDiv = document.getElementById("onlineTimeLengthcustomDiv");
+        customDiv.style.display = "";
+
+        var yesterday = document.getElementById("onlineTimeLengthyesterday");
+        yesterday.style.color = "Black";
+        var nearlySevenDays = document.getElementById("onlineTimeLengthnearlySevenDays");
+        nearlySevenDays.style.color = "Black";
+        var nearlyThirtyDays = document.getElementById("onlineTimeLengthnearlyThirtyDays");
+        nearlyThirtyDays.style.color = "Black";
+        var today = document.getElementById("onlineTimeLengthtoday");
+        today.style.color = "Black";
+
+    }
+    function onlineTimeLength() {
+        var trace_starttime = $('#txtonlinetimestarttime').datebox("getValue");
+        var trace_endtime = $('#txtonlinetimeendtime').datebox("getValue");
+        onlineTimeLengthbutton(trace_starttime, trace_endtime);
+    }
+</script>
+<div class="trace_item" style="height: 4%; background-color: #F0F8FF">
+    <div style="line-height: 38.625px; float: left">
+        <a id="onlineTimeLengthtoday" onclick="onlineTimeLengthtoday()" href="#" style="text-decoration: none;
+            color: Black; margin-top: 10px; height: 20px">今天</a> <a id="onlineTimeLengthyesterday"
+                onclick="onlineTimeLengthyesterday()" href="#" style="text-decoration: none;
+                color: Black">昨天</a> <a id="onlineTimeLengthnearlySevenDays" onclick="onlineTimeLengthnearlySevenDays()"
+                    href="#" style="text-decoration: none; color: Black">近7天</a> <a id="onlineTimeLengthnearlyThirtyDays"
+                        onclick="onlineTimeLengthnearlyThirtyDays()" href="#" style="text-decoration: none;
+                        color: Black">近30天</a> <a id="onlineTimeLengthcustom" onclick="onlineTimeLengthCustom()"
+                            href="#" style="text-decoration: none; color: Black">自定义</a>
+    </div>
+    <div id="onlineTimeLengthcustomDiv" style="display: none; line-height: 38.625px;
+        margin-left: 200px">
+        选择终端:<input id="comboonlinetime" class="easyui-combobox" style="width: 180px;" textfield="text"
+            valuefield="id" url="ashx/show_target.ashx" />
+        开始时间:<input id="txtonlinetimestarttime" class="easyui-datebox" style="width: 170px;" />
+        结束时间:<input id="txtonlinetimeendtime" class="easyui-datebox" style="width: 170px;" />
+        <a class="easyui-linkbutton" id="distancetargetselect" onclick="onlineTimeLength()"
+            style="width: 50px;">查询</a>
+    </div>
+</div>
+<div id="divonlineTimeLength" style="border: 1px solid #e6e6e6; border-top: 0px;
+    height: 95.8%; width: 99.5%">
+    <table id="gridonlineTimeLength" class="easyui-datagrid" width="100%" data-options="border:false,singleSelect:true,fit:true,fitColumns:false,pagination: true">
+        <thead>
+            <tr>
+                <th width="380px" data-options="field:'time',align:'center'">
+                    统计时间
+                </th>
+                <th width="380px" data-options="field:'id',align:'center'">
+                    目标号
+                </th>
+                <th width="380px" data-options="field:'carownername',align:'center'">
+                    车主姓名
+                </th>
+                <th width="380px" data-options="field:'carplatenumber',align:'center'">
+                    车牌号
+                </th>
+                <th width="380px" data-options="field:'ontime',align:'center'">
+                    在线时长
+                </th>
+            </tr>
+        </thead>
+    </table>
+</div>

@@ -1,0 +1,688 @@
+<html><head><meta http-equiv=Content-Type content='text/html; charset=utf-8'></head>
+<script type="text/javascript">
+    function areaButton(trace_starttime, trace_endtime) {
+        var /*num = $('#spanNum').html()*/num = $('#areacombo').combobox("getValue");
+
+        if (trace_starttime.length == 0 || trace_endtime.length == 0) {
+            alert('请设置开始、结束时间!');
+            return;
+        }
+        $.ajax({
+            url: 'ashx/area_position.ashx?num=' + num + "&trace_starttime=" + trace_starttime + "&trace_endtime=" + trace_endtime,
+            type: 'GET',
+            error: function () { },
+            success: function (data) {
+                if (data == '空' || data == null || data == '' || data.lendth <= 0) {
+                    alert("此终端没有位置点，不进行面积测量");
+                    return;
+                }
+                var sb = "[";
+                var strRet = "";
+                var arr = [];
+                arr = data.split(',');
+                var arrdistinct = [];
+                var count = 0;
+                var distance = 0;
+                var arrareapoint = [];
+                var array = new Array();
+                var arraynumber = new Array();
+                var arrayname = new Array();
+                var noarr = new Array();
+                var arrcount = new Array();
+                for (var i = 0; i < arr.length / 7; i++) {
+                    if (i > 0 && arr[7 * i + 2] != arr[7 * (i - 1) + 2]) {
+                        if (i == arr.length / 7 - 1 || i == arr.length / 7 - 2) {
+                            noarr[arr[7 * i + 2]] = arr[7 * i + 5] + "," + arr[7 * i + 6];
+                        }
+                        else {
+                            if ((count == 1 || count == 0) && arrcount[arr[7 * (i - 1) + 2]] != 2) {
+                                noarr[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 5] + "," + arr[7 * (i - 1) + 6];
+                            }
+                        }
+                        arrdistinct = [];
+                        count = -1;
+                        distance = 0;
+                        arrareapoint = [];
+                    }
+                    else {
+                        if (i == arr.length / 7 - 1) {
+                            arrdistinct = [];
+                            count = -1;
+                            distance = 0;
+                            arrareapoint = [];
+                        }
+                        else {
+                            if (count == 0) {
+                                arrdistinct[2 * count] = arr[7 * i];
+                                arrdistinct[2 * count + 1] = arr[7 * i + 1];
+                            }
+                            else {
+                                if ((arr[7 * i + 3] - arr[7 * (i - 1) + 3]) < 300 && arr[7 * i + 4] >= 0 && arr[7 * i + 4] < 800) {
+                                    arrdistinct[2 * count] = arr[7 * i];
+                                    arrdistinct[2 * count + 1] = arr[7 * i + 1];
+                                }
+                                else {
+                                    if (arrdistinct.length > 62) {
+                                        arrcount[arr[7 * i + 2]] = 2;
+                                        for (var t = 0; t < arrdistinct.length / 2; t++) {
+                                            if (t == 0) {
+                                                arrareapoint[t] = arrdistinct[t];
+                                                arrareapoint[t + 1] = arrdistinct[t + 1];
+                                                arrareapoint[t + 2] = arrdistinct[t];
+                                                arrareapoint[t + 3] = arrdistinct[t + 1];
+                                                arrareapoint[t + 4] = arrdistinct[t];
+                                                arrareapoint[t + 5] = arrdistinct[t + 1];
+                                                arrareapoint[t + 6] = arrdistinct[t];
+                                                arrareapoint[t + 7] = arrdistinct[t + 1];
+                                            }
+                                            else {
+                                                if (arrdistinct[2 * t + 1] > arrareapoint[1]) {
+                                                    arrareapoint[0] = arrdistinct[2 * t];
+                                                    arrareapoint[1] = arrdistinct[2 * t + 1];
+                                                }
+                                                if (arrdistinct[2 * t] > arrareapoint[2]) {
+                                                    arrareapoint[2] = arrdistinct[2 * t];
+                                                    arrareapoint[3] = arrdistinct[2 * t + 1];
+                                                }
+                                                if (arrdistinct[2 * t + 1] < arrareapoint[5]) {
+                                                    arrareapoint[4] = arrdistinct[2 * t];
+                                                    arrareapoint[5] = arrdistinct[2 * t + 1];
+                                                }
+                                                if (arrdistinct[2 * t] < arrareapoint[6]) {
+                                                    arrareapoint[6] = arrdistinct[2 * t];
+                                                    arrareapoint[7] = arrdistinct[2 * t + 1];
+                                                }
+                                            }
+                                        }
+                                        var nCount = arrareapoint.length / 2;
+                                        for (var k = 0; k < arrdistinct.length / 2; k++) {
+                                            var x = arrdistinct[2 * k];
+                                            var y = arrdistinct[2 * k + 1];
+
+                                            var r;
+                                            var j = nCount - 1;
+                                            var oddNodes = false;
+
+                                            for (r = 0; r < nCount; r++) {
+                                                if ((arrareapoint[2 * r + 1] <= y && arrareapoint[2 * j + 1] >= y || arrareapoint[2 * j + 1] <= y && arrareapoint[2 * r + 1] >= y) && (arrareapoint[2 * r] <= x || arrareapoint[2 * j] <= x)) {
+                                                    oddNodes ^= (arrareapoint[2 * r] + (y - arrareapoint[2 * r + 1]) / (arrareapoint[2 * j + 1] - arrareapoint[2 * r + 1]) * (arrareapoint[2 * j] - arrareapoint[2 * r]) < x);
+                                                }
+                                                j = r;
+                                            }
+
+                                            if (oddNodes == false) {
+                                                for (var q = 0; q < arrareapoint.length / 2; q++) {
+                                                    if (q == arrareapoint.length / 2 - 1) {
+                                                        if (arrdistinct[2 * k + 1] < arrareapoint[1] && arrdistinct[2 * k + 1] > arrareapoint[2 * q + 1] && arrdistinct[2 * k] > arrareapoint[2 * q] && arrdistinct[2 * k] < arrareapoint[0]) {
+                                                            arrareapoint[arrareapoint.length] = arrdistinct[2 * k];
+                                                            arrareapoint[arrareapoint.length + 1] = arrdistinct[2 * k + 1];
+                                                        }
+                                                    }
+                                                    else {
+                                                        if (arrdistinct[2 * k + 1] < arrareapoint[2 * q + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k] > arrareapoint[2 * q] && arrdistinct[2 * k] < arrareapoint[2 * (q + 1)] || arrdistinct[2 * k + 1] < arrareapoint[2 * q + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k] > arrareapoint[2 * (q + 1)] && arrdistinct[2 * k] < arrareapoint[2 * q] || arrdistinct[2 * k + 1] < arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * q + 1] && arrdistinct[2 * k] > arrareapoint[2 * (q + 1)] && arrdistinct[2 * k] < arrareapoint[2 * q] || arrdistinct[2 * k + 1] < arrareapoint[2 * (q + 1) + 1] && arrdistinct[2 * k + 1] > arrareapoint[2 * q + 1] && arrdistinct[2 * k] > arrareapoint[2 * q] && arrdistinct[2 * k] < arrareapoint[2 * (q + 1)]) {
+                                                            for (var w = arrareapoint.length / 2; w > q + 1; w--) {
+                                                                arrareapoint[2 * w] = arrareapoint[2 * w - 2];
+                                                                arrareapoint[2 * w + 1] = arrareapoint[2 * w - 1];
+                                                            }
+                                                            arrareapoint[2 * (q + 1)] = arrdistinct[2 * k];
+                                                            arrareapoint[2 * (q + 1) + 1] = arrdistinct[2 * k + 1];
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        for (var n = 0; n < arrareapoint.length / 2; n++) {
+                                            if (isNaN(arrareapoint[2 * n])) {
+                                                arrareapoint.remove(arrareapoint[2 * n]);
+                                            }
+                                            if (isNaN(arrareapoint[2 * n + 1])) {
+                                                arrareapoint.remove(arrareapoint[2 * n + 1]);
+                                            }
+                                        }
+                                        for (var u = 0; u < arrareapoint.length / 2; u++) {
+                                            for (var o = u + 1; o < arrareapoint.length / 2; o++) {
+                                                if (arrareapoint[2 * u] == arrareapoint[2 * o] && arrareapoint[2 * u + 1] == arrareapoint[2 * o + 1]) {
+                                                    arrareapoint.remove(arrareapoint[2 * o + 1]);
+                                                    arrareapoint.remove(arrareapoint[2 * o]);
+                                                }
+                                            }
+                                        }
+                                        for (var h = 0; h < arrareapoint.length / 2; h++) {
+                                            arrareapoint[h] = arrareapoint[2 * h] + "," + arrareapoint[2 * h + 1];
+                                        }
+                                        var numcc = arrareapoint.length / 2;
+                                        for (var g = arrareapoint.length - 1; g >= numcc; g--) {
+                                            arrareapoint.remove(arrareapoint[g]);
+                                        }
+                                        distance = getPolygonArea(arrareapoint);
+                                        if (distance != 0) {
+                                            distance = distance + ".000";
+                                            distance = distance.toString().split('.')[0] + '.' + distance.toString().split('.')[1].substring(0, 3);
+                                        }
+                                        if (array[arr[7 * (i - 1) + 2]] != null && array[arr[7 * (i - 1) + 2]] != 0 && array[arr[7 * (i - 1) + 2]] != "") {
+                                            array[arr[7 * (i - 1) + 2]] = Number(array[arr[7 * (i - 1) + 2]]) + Number(distance);
+                                        }
+                                        else {
+                                            array[arr[7 * (i - 1) + 2]] = Number(distance);
+                                            arraynumber[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 6];
+                                            arrayname[arr[7 * (i - 1) + 2]] = arr[7 * (i - 1) + 5];
+                                        }
+                                    }
+                                    arrdistinct = [];
+                                    count = -1;
+                                    distance = 0;
+                                    arrareapoint = [];
+                                }
+                            }
+                        }
+                    }
+                    count++;
+                }
+                for (var item in array) {
+                    if (!isNaN(Number(item))) {
+                        sb += "{'time':'" + trace_starttime + "至" + trace_endtime + "','targetnumber':'" + item + "','area':'" + array[item] * 0.0015 + "','carownername':'" + arrayname[item] + "','carplatenumber':'" + arraynumber[item] + "'},";
+                    }
+                }
+                for (var item in noarr) {
+                    if (!isNaN(Number(item))) {
+                        sb += "{'time':'" + trace_starttime + "至" + trace_endtime + "','targetnumber':'" + item + "','area':'" + 0 + "','carownername':'" + noarr[item].toString().split(',')[0] + "','carplatenumber':'" + noarr[item].toString().split(',')[1] + "'},";
+                    }
+                }
+                strRet = sb.substring(0, sb.length - 1);
+                strRet += "]";
+                var arrdata = null;
+                try { eval("arrdata=" + data) } catch (e) { }
+                //mini.get('Div5').setData(arr);
+
+                var start = 0;
+                var end = 50;
+                var pager = $("#gridarea").datagrid("getPager");
+                $("#gridarea").datagrid("loadData", arrdata.slice(start, end));
+                pager.pagination({
+                    total: arrdata.length,
+                    pageNumber: 1,
+                    pageSize: 50,
+                    pageList: [20, 50, 100],
+                    showRefresh: false,
+                    onSelectPage: function (pageNo, pageSize) {
+                        start = (pageNo - 1) * pageSize;
+                        end = start + pageSize;
+                        $("#gridarea").datagrid("loadData", arrdata.slice(start, end));
+                        pager.pagination('refresh', {
+                            total: arrdata.length,
+                            pageNumber: pageNo
+                        });
+                    }
+                });
+                //$("#gridarea").datagrid("loadData", arr);
+            }
+        });
+    }
+    Array.prototype.indexOf = function (val) { for (var i = 0; i < this.length; i++) { if (this[i] == val) return i; } return -1; };
+
+    Array.prototype.remove = function (val) { var index = this.indexOf(val); if (index > -1) { this.splice(index, 1); } };
+    function areatoday() {
+        var areatoday = document.getElementById("areatoday");
+        areatoday.style.color = "#1874CD";
+        var areacustomDiv = document.getElementById("areacustomDiv");
+        areacustomDiv.style.display = "none";
+
+        var custom = document.getElementById("custom");
+        custom.style.color = "Black";
+        var areayesterday = document.getElementById("areayesterday");
+        areayesterday.style.color = "Black";
+        var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+        areanearlySevenDays.style.color = "Black";
+        var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+        areanearlyThirtyDays.style.color = "Black";
+
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var trace_endtime = year + "-" + month + "-" + day;
+        var trace_starttime = year + "-" + month + "-" + day; ;
+        areaButton(trace_starttime, trace_endtime);
+
+    }
+    function areayesterday() {
+        var areayesterday = document.getElementById("areayesterday");
+        areayesterday.style.color = "#1874CD";
+        var areacustomDiv = document.getElementById("areacustomDiv");
+        areacustomDiv.style.display = "none";
+
+        var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+        areanearlySevenDays.style.color = "Black";
+        var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+        areanearlyThirtyDays.style.color = "Black";
+        var areatoday = document.getElementById("areatoday");
+        areatoday.style.color = "Black";
+        var custom = document.getElementById("custom");
+        custom.style.color = "Black";
+
+        var subtracter = 1;
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var oldday = 0;
+        var oldmonth = 0;
+        var oldyear = 0;
+        if (day <= subtracter) {
+            if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 05 || month == 07 || month == 10 || month == 12) {
+                oldday = 30 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 03) {
+                if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                    oldday = 29 - (subtracter - day);
+                }
+                else {
+                    oldday = 28 - (subtracter - day);
+                }
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 02) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year - 1;
+            }
+        } else {
+            oldday = day - subtracter;
+            oldmonth = month;
+            oldyear = year;
+        }
+        var trace_endtime = oldyear + "-" + oldmonth + "-" + oldday;
+        var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+        areaButton(trace_starttime, trace_endtime);
+    }
+    function areanearlySevenDays() {
+        var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+        areanearlySevenDays.style.color = "#1874CD";
+        var areacustomDiv = document.getElementById("areacustomDiv");
+        areacustomDiv.style.display = "none";
+
+        var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+        areanearlyThirtyDays.style.color = "Black";
+        var areatoday = document.getElementById("areatoday");
+        areatoday.style.color = "Black";
+        var custom = document.getElementById("custom");
+        custom.style.color = "Black";
+        var areayesterday = document.getElementById("areayesterday");
+        areayesterday.style.color = "Black";
+
+        var subtracter = 7;
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var oldday = 0;
+        var oldmonth = 0;
+        var oldyear = 0;
+        if (day <= subtracter) {
+            if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 05 || month == 07 || month == 10 || month == 12) {
+                oldday = 30 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 03) {
+                if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                    oldday = 29 - (subtracter - day);
+                }
+                else {
+                    oldday = 28 - (subtracter - day);
+                }
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 02) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year - 1;
+            }
+        } else {
+            oldday = day - subtracter;
+            oldmonth = month;
+            oldyear = year;
+        }
+        var trace_endtime = year + "-" + month + "-" + day;
+        var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+        areaButton(trace_starttime, trace_endtime);
+    }
+    function areanearlyThirtyDays() {
+        var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+        areanearlyThirtyDays.style.color = "#1874CD";
+        var areacustomDiv = document.getElementById("areacustomDiv");
+        areacustomDiv.style.display = "none";
+
+        var areatoday = document.getElementById("areatoday");
+        areatoday.style.color = "Black";
+        var custom = document.getElementById("custom");
+        custom.style.color = "Black";
+        var areayesterday = document.getElementById("areayesterday");
+        areayesterday.style.color = "Black";
+        var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+        areanearlySevenDays.style.color = "Black";
+
+        var subtracter = 30;
+        var date = new Date();
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        var oldday = 0;
+        var oldmonth = 0;
+        var oldyear = 0;
+        if (day <= subtracter) {
+            if (month == 04 || month == 06 || month == 08 || month == 09 || month == 11 || month == 01) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 05 || month == 07 || month == 10 || month == 12) {
+                oldday = 30 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 03) {
+                if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) {
+                    oldday = 29 - (subtracter - day);
+                }
+                else {
+                    oldday = 28 - (subtracter - day);
+                }
+                oldmonth = month - 1;
+                oldyear = year;
+            }
+            if (month == 02) {
+                oldday = 31 - (subtracter - day);
+                oldmonth = month - 1;
+                oldyear = year - 1;
+            }
+        } else {
+            oldday = day - subtracter;
+            oldmonth = month;
+            oldyear = year;
+        }
+        var trace_endtime = year + "-" + month + "-" + day;
+        var trace_starttime = oldyear + "-" + oldmonth + "-" + oldday; ;
+        areaButton(trace_starttime, trace_endtime);
+    }
+    function custom() {
+        var custom = document.getElementById("custom");
+        custom.style.color = "#1874CD";
+        var areacustomDiv = document.getElementById("areacustomDiv");
+        areacustomDiv.style.display = "";
+
+        var areayesterday = document.getElementById("areayesterday");
+        areayesterday.style.color = "Black";
+        var areanearlySevenDays = document.getElementById("areanearlySevenDays");
+        areanearlySevenDays.style.color = "Black";
+        var areanearlyThirtyDays = document.getElementById("areanearlyThirtyDays");
+        areanearlyThirtyDays.style.color = "Black";
+        var areatoday = document.getElementById("areatoday");
+        areatoday.style.color = "Black";
+
+    }
+    function areaB() {
+        var trace_starttime = $('#txtareastarttime').datebox("getValue");
+        var trace_endtime = $('#txtareaendtime').datebox("getValue");
+
+        areaButton(trace_starttime, trace_endtime);
+    }
+
+    function getPolygonArea(polygon) {
+        var pts;
+        pts = polygon;
+        if (pts.length < 6) {//小于3个顶点，不能构建面  
+            return 0;
+        }
+
+        var totalArea = 0; //初始化总面积  
+        var LowX = 0.0;
+        var LowY = 0.0;
+        var MiddleX = 0.0;
+        var MiddleY = 0.0;
+        var HighX = 0.0;
+        var HighY = 0.0;
+        var AM = 0.0;
+        var BM = 0.0;
+        var CM = 0.0;
+        var AL = 0.0;
+        var BL = 0.0;
+        var CL = 0.0;
+        var AH = 0.0;
+        var BH = 0.0;
+        var CH = 0.0;
+        var CoefficientL = 0.0;
+        var CoefficientH = 0.0;
+        var ALtangent = 0.0;
+        var BLtangent = 0.0;
+        var CLtangent = 0.0;
+        var AHtangent = 0.0;
+        var BHtangent = 0.0;
+        var CHtangent = 0.0;
+        var ANormalLine = 0.0;
+        var BNormalLine = 0.0;
+        var CNormalLine = 0.0;
+        var OrientationValue = 0.0;
+        var AngleCos = 0.0;
+        var Sum1 = 0.0;
+        var Sum2 = 0.0;
+        var Count2 = 0;
+        var Count1 = 0;
+        var Sum = 0.0;
+        var Radius = EARTHRADIUS; //6378137.0,WGS84椭球半径   
+        var Count = pts.length;
+        var surpluspoint = [];
+        var num = 0;
+        var icount = 0;
+        var addicount = 2;
+        var whilecount = 0;
+        var EARTHRADIUS = 6370.81;
+        while (surpluspoint != [] && surpluspoint.length != 0 || whilecount == 0) {
+
+            whilecount++;
+            num = 0;
+            if (surpluspoint.length != 0) {
+                //Count=surpluspoint.length+1;
+                icount = addicount - 1;
+            }
+            if (surpluspoint.length == 1) {
+                if (Count % 2 != 0) {
+                    LowX = pts[Count - 1].toString().split(',')[0];
+                    LowY = pts[Count - 1].toString().split(',')[1];
+                    MiddleX = pts[Count - 2].toString().split(',')[0];
+                    MiddleY = pts[Count - 2].toString().split(',')[1];
+                    HighX = pts[icount].toString().split(',')[0];
+                    HighY = pts[icount].toString().split(',')[1];
+                }
+                else {
+                    LowX = pts[Count - 1].toString().split(',')[0];
+                    LowY = pts[Count - 1].toString().split(',')[1];
+                    MiddleX = pts[(Count - 1 + icount) / 2].toString().split(',')[0];
+                    MiddleY = pts[(Count - 1 + icount) / 2].toString().split(',')[1];
+                    HighX = pts[icount].toString().split(',')[0];
+                    HighY = pts[icount].toString().split(',')[1];
+                }
+                var x1, x2, y1, y2;
+                x1 = degreeToRad(_getLoop(LowX, -180, 180));
+                y1 = degreeToRad(_getRange(LowY, -74, 74));
+                x2 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                y2 = degreeToRad(_getRange(MiddleY, -74, 74));
+                var a = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                x1 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                y1 = degreeToRad(_getRange(MiddleY, -74, 74));
+                x2 = degreeToRad(_getLoop(HighX, -180, 180));
+                y2 = degreeToRad(_getRange(HighY, -74, 74));
+                var b = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                x1 = degreeToRad(_getLoop(HighX, -180, 180));
+                y1 = degreeToRad(_getRange(HighY, -74, 74));
+                x2 = degreeToRad(_getLoop(LowX, -180, 180));
+                y2 = degreeToRad(_getRange(LowY, -74, 74));
+                var c = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+
+
+
+
+                var p = (a + b + c) / 2;
+                var d = p * (p - a) * (p - b) * (p - c);
+                if (d < 0) {
+                    d = 0 - d;
+                }
+                totalArea += Math.sqrt(d);
+                surpluspoint = [];
+            }
+            else {
+                if (whilecount != 1) {
+                    addicount = addicount * 2;
+                }
+                surpluspoint = [];
+
+                for (var i = icount; i < Count; i += addicount) {
+
+                    if (i == icount) {
+                        LowX = pts[Count - 1].toString().split(',')[0];
+                        LowY = pts[Count - 1].toString().split(',')[1];
+                        MiddleX = pts[i].toString().split(',')[0];
+                        MiddleY = pts[i].toString().split(',')[1];
+                        HighX = pts[i + addicount / 2].toString().split(',')[0];
+                        HighY = pts[i + addicount / 2].toString().split(',')[1];
+                    }
+                    else if (i == Count + icount - addicount) {
+                        LowX = pts[i - addicount + 1].toString().split(',')[0];
+                        LowY = pts[i - addicount + 1].toString().split(',')[1];
+                        MiddleX = pts[i].toString().split(',')[0];
+                        MiddleY = pts[i].toString().split(',')[1];
+                        HighX = pts[Count - 1].toString().split(',')[0];
+                        HighY = pts[Count - 1].toString().split(',')[1];
+                    }
+                    else if ((i + addicount / 2) >= Count) {
+                        continue;
+                    }
+                    else {
+                        LowX = pts[i - addicount + 1].toString().split(',')[0];
+                        LowY = pts[i - addicount + 1].toString().split(',')[1];
+                        MiddleX = pts[i].toString().split(',')[0];
+                        MiddleY = pts[i].toString().split(',')[1];
+                        HighX = pts[i + addicount / 2].toString().split(',')[0];
+                        HighY = pts[i + addicount / 2].toString().split(',')[1];
+                    }
+                    surpluspoint[num] = pts[(2 * i + 2) / 2];
+                    num++;
+
+                    var x1, x2, y1, y2;
+                    x1 = degreeToRad(_getLoop(LowX, -180, 180));
+                    y1 = degreeToRad(_getRange(LowY, -74, 74));
+                    x2 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                    y2 = degreeToRad(_getRange(MiddleY, -74, 74));
+                    var a = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                    x1 = degreeToRad(_getLoop(MiddleX, -180, 180));
+                    y1 = degreeToRad(_getRange(MiddleY, -74, 74));
+                    x2 = degreeToRad(_getLoop(HighX, -180, 180));
+                    y2 = degreeToRad(_getRange(HighY, -74, 74));
+                    var b = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+                    x1 = degreeToRad(_getLoop(HighX, -180, 180));
+                    y1 = degreeToRad(_getRange(HighY, -74, 74));
+                    x2 = degreeToRad(_getLoop(LowX, -180, 180));
+                    y2 = degreeToRad(_getRange(LowY, -74, 74));
+                    var c = EARTHRADIUS * Math.acos((Math.sin(y1) * Math.sin(y2) + Math.cos(y1) * Math.cos(y2) * Math.cos(x2 - x1)));
+
+                    var p = (a + b + c) / 2;
+                    var d = p * (p - a) * (p - b) * (p - c);
+                    if (d < 0) {
+                        d = 0 - d;
+                    }
+                    totalArea += Math.sqrt(d);
+                }
+                return totalArea; //返回总面积  
+            }
+        }
+    }
+    function _getLoop(v, a, b) {
+        while (v > b) {
+            v -= b - a
+        }
+        while (v < a) {
+            v += b - a
+        }
+        return v;
+    }
+    function degreeToRad(degree) {
+        return Math.PI * degree / 180;
+    }
+
+    /* 将弧度转化为度 
+    * @param {radian} Number 弧度      
+    * @returns {Number} 度 
+    */
+    function radToDegree(rad) {
+        return (180 * rad) / Math.PI;
+    }
+
+    /* 将v值限定在a,b之间，纬度使用 
+    */
+    function _getRange(v, a, b) {
+        if (a != null) {
+            v = Math.max(v, a);
+        }
+        if (b != null) {
+            v = Math.min(v, b);
+        }
+        return v;
+    }
+</script>
+<div class="trace_item" style="height: 4%; background-color: #F0F8FF">
+    <div style="line-height: 38.625px; float: left">
+        <a id="areatoday" onclick="areatoday()" href="#" style="text-decoration: none; color: Black;
+            margin-top: 10px; height: 20px">今天</a> <a id="areayesterday" onclick="areayesterday()"
+                href="#" style="text-decoration: none; color: Black">昨天</a> <a id="areanearlySevenDays"
+                    onclick="areanearlySevenDays()" href="#" style="text-decoration: none; color: Black">
+                    近7天</a> <a id="areanearlyThirtyDays" onclick="areanearlyThirtyDays()" href="#" style="text-decoration: none;
+                        color: Black">近30天</a> <a id="custom" onclick="custom()" href="#" style="text-decoration: none;
+                            color: Black">自定义</a>
+    </div>
+    <div id="areacustomDiv" style="display: none; line-height: 38.625px; margin-left: 200px">
+        选择终端:<input id="areacombo" class="easyui-combobox" style="width: 180px;" textfield="text"
+            valuefield="id" url="ashx/show_target.ashx" />
+        开始时间:<input id="txtareastarttime" class="easyui-datebox" style="width: 170px;" />
+        结束时间:<input id="txtareaendtime" class="easyui-datebox" style="width: 170px;" />
+        <a class="easyui-linkbutton" id="areatargetselect" onclick="areaB()" style="width: 50px;">
+            查询</a>
+    </div>
+</div>
+<div id="divarea" style="border: 1px solid #e6e6e6; border-top: 0px; height: 95.8%;
+    width: 99%">
+    <table id="gridarea" class="easyui-datagrid" data-options="border:false,singleSelect:true,fit:true,fitColumns:false,pagination: true">
+        <thead>
+            <tr>
+                <th width="380px" data-options="field:'time',align:'center'">
+                    统计时间
+                </th>
+                <th width="380px" data-options="field:'targetnumber',align:'center'">
+                    目标号
+                </th>
+                <th width="380px" data-options="field:'carownername',align:'center'">
+                    车主姓名
+                </th>
+                <th width="380px" data-options="field:'carplatenumber',align:'center'">
+                    车牌号
+                </th>
+                <th width="380px" data-options="field:'area',align:'center'">
+                    面积(亩)
+                </th>
+            </tr>
+        </thead>
+    </table>
+</div>

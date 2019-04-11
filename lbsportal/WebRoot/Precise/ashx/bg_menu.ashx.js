@@ -1,0 +1,1 @@
+[{"id":"1","text":"里程统计","iconCls":"icon-tux","attributes":{"url":"html/MileageStatistics.htm"/*tpa=http://www.beidouguard.com:6010/Precise/ashx/html/MileageStatistics.htm*/}},{"id":"2","text":"在线时长","iconCls":"icon-tux","attributes":{"url":"html/OnlineTimeLength.htm"/*tpa=http://www.beidouguard.com:6010/Precise/ashx/html/OnlineTimeLength.htm*/}}]

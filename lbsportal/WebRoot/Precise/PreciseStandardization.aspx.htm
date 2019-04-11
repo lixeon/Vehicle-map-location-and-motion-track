@@ -1,0 +1,41 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><meta http-equiv=Content-Type content='text/html; charset=utf-8'>
+<title>
+
+</title><link rel="shortcut icon" type="image/ico" href="images/favicon.ico" /><link href="themes/bootstrap/easyui.css" tppabs="http://www.beidouguard.com:6010/Precise/themes/bootstrap/easyui.css" rel="stylesheet" type="text/css" /><link href="themes/icon.css" tppabs="http://www.beidouguard.com:6010/Precise/themes/icon.css" rel="stylesheet" type="text/css" /><link href="css/table.css" tppabs="http://www.beidouguard.com:6010/Precise/css/table.css" rel="stylesheet" type="text/css" />
+    <script src="js/jquery.min.js" tppabs="http://www.beidouguard.com:6010/Precise/js/jquery.min.js" type="text/javascript"></script>
+    <script src="js/jquery.easyui.min.js" tppabs="http://www.beidouguard.com:6010/Precise/js/jquery.easyui.min.js" type="text/javascript"></script>
+    <script src="js/common.js" tppabs="http://www.beidouguard.com:6010/Precise/js/common.js" type="text/javascript"></script>
+    <script src="js/init.js" tppabs="http://www.beidouguard.com:6010/Precise/js/init.js" type="text/javascript"></script>
+    <script src="js/easyui-lang-zh_CN.js" tppabs="http://www.beidouguard.com:6010/Precise/js/easyui-lang-zh_CN.js" type="text/javascript"></script>
+</head>
+<body class="easyui-layout">
+
+    <div data-options="region:'north',border:false" style="background: #0393DC;
+        padding: 10px; font-size: 40px; font-family:华文新魏; padding-left:40px; color:White">
+        农机精细化管理系统
+        <div style="position: absolute; right: 5px; top: 10px;" id="div_welcome">
+        </div>
+        <div style="position: absolute; right: 0px; bottom: 0px; text-align:center">
+            <a href="javascript:void(0);" class="easyui-linkbutton" style=" background:url(themes/images/House.png)/*tpa=http://www.beidouguard.com:6010/Precise/themes/images/House.png*/ no-repeat center; height:56px; width:64px; background-position-y:-0px" data-options="plain:true"
+                onclick="closeTab();"><span style=" line-height:80px; color:#FFFFFF">首页</span></a>
+                <a href="javascript:void(0);" class="easyui-linkbutton" style=" background:url(themes/images/Clock.png)/*tpa=http://www.beidouguard.com:6010/Precise/themes/images/Clock.png*/ no-repeat center; height:56px;width:64px; background-position-y:-0px; margin-left:20px" data-options="plain:true"
+                onclick=" addTab('在线时长', 'html/OnlineTimeLength.htm'/*tpa=http://www.beidouguard.com:6010/Precise/html/OnlineTimeLength.htm*/, 'icon-clock');"><span style=" line-height:80px; color:#FFFFFF">在线时长</span></a>
+                  <a href="javascript:void(0);" class="easyui-linkbutton" style=" background:url(themes/images/Road.png)/*tpa=http://www.beidouguard.com:6010/Precise/themes/images/Road.png*/ no-repeat center; height:56px;width:64px; background-position-y:-0px; margin-left:20px" data-options="plain:true"
+                onclick="addTab('里程统计', 'html/MileageStatistics.htm'/*tpa=http://www.beidouguard.com:6010/Precise/html/MileageStatistics.htm*/, 'icon-chart_line');"><span style=" line-height:80px; color:#FFFFFF">里程统计</span></a>
+                <a href="javascript:void(0);" class="easyui-linkbutton" style=" background:url(themes/images/Despeckle.png)/*tpa=http://www.beidouguard.com:6010/Precise/themes/images/Despeckle.png*/ no-repeat center; height:56px;width:64px; background-position-y:-0px; margin-left:20px" data-options="plain:true"
+                onclick="addTab('面积测量', 'html/area.htm'/*tpa=http://www.beidouguard.com:6010/Precise/html/area.htm*/, 'icon-shape_handles');"><span style=" line-height:80px; color:#FFFFFF">面积测量</span></a>
+                <a href="../WebLogout.aspx" tppabs="http://www.beidouguard.com:6010/WebLogout.aspx" class="easyui-linkbutton" style=" background:url(themes/images/Media-Start.png)/*tpa=http://www.beidouguard.com:6010/Precise/themes/images/Media-Start.png*/ no-repeat center; height:56px;width:64px; background-position-y:-0px; margin-left:20px; margin-right:20px" data-options="plain:true""><span style=" line-height:80px; color:#FFFFFF">退出</span></a>
+        </div>
+    </div>
+ 
+    <div data-options="region:'center'" style=" height:1021px; width:1203px; background:url(themes/images/house_background.jpg)/*tpa=http://www.beidouguard.com:6010/Precise/themes/images/house_background.jpg*/ no-repeat center">
+        <div id="tabs" class="easyui-tabs" fit="true" border="false" 
+        </div>
+    </div>
+</body>
+</html>

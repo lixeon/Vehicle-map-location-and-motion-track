@@ -1,0 +1,488 @@
+// console is open by default.
+vp.v.isConsoleOpen = true;
+// console height
+vp.v.ConsoleHeight = 260;
+// terminal info is close by default.
+//vp.v.isTMInfoOpen = true;
+
+vp.v._g_TMI_w = 230;
+vp.v._g_TMI_h = 160;
+vp.v.terminals = null;
+
+// current terminal
+vp.v.cur_terminal = null;
+
+
+// main page
+vp.page.main = {
+    _timer_status : null,
+
+    // initialize
+	init: function() {
+
+		// int header
+		vp.page.main._initHeader();
+
+		// init toolbar
+		vp.page.main._initToolbar();
+
+	    // terminal info box draggable.
+	    //$("#panel_terminal_info").draggable({ handle: "h6" });
+	    $("#panel_terminal_info").css({"margin-left": ($(window).innerWidth() - 1 * 2 - vp.v._g_TMI_w - 25) + "px"});
+
+	    // menu show/hide switch
+	    $("#btn_menu_slide").click(function() {
+	    	$("#my-menus-panel").toggle("fast", function() {
+    			vp.page.main._resize();
+	    	});
+	    	$(this).find("i").toggleClass("icon-arrow-down");
+	    });
+
+	    // console
+	    $("#console").dialog({
+	        autoOpen : true,
+	        maxHeight : vp.v.ConsoleHeight,
+	        height : "auto",
+	        width : 260,
+	        position : {my: "left top", at: "right bottom", of: window},
+	        modal : false,
+	        show : "clip",
+	        hide : "clip",
+	        resizable : false
+	    });
+
+	    // auto refresh status
+	    $("#chk_auto_refresh").click(function() {
+	        var checked = $(this)[0].checked;
+	        if (checked) {
+	            vp.page.main._timer_status = window.setInterval(function() {
+	                var cb = function(text) {
+	                    var json = $.parseJSON(text);
+	                    vp.v.cur_terminal.statusChanged({
+	                        status: json.status,
+	                        hbTime: json.hbTime
+	                    });
+	                    
+	                };
+	                lbs.common.ajax("portal/get_latest_status.shtm", {
+	                    terminalSerialNo: vp.v.login_terminal_serial_no
+	                }, cb);
+	            }, 1000 * 15);
+	        } else {
+	            if (vp.page.main._timer_status != null) {
+	                window.clearInterval(vp.page.main._timer_status);
+	                vp.page.main._timer_status = null;
+	            }
+	        }
+	    });
+	    
+	    // switch map type
+	    $("#btn_maptype_baidu,#btn_maptype_google").click(function() {
+	    	var mapType = $(this).attr("id").replace("btn_maptype_", "");
+	    	// switch map
+	    	lbs.common.switchMap(mapType);
+	    });
+	},
+
+	_initHeader: function() {
+	    var today = new Date();
+	    var fdate = today.getFullYear() + "年";
+	    var tVal = today.getMonth() + 1;
+	    fdate += ((tVal < 10 ? "0" + tVal : tVal) + "月");
+	    tVal = today.getDate();
+	    fdate += ((tVal < 10 ? "0" + tVal : tVal) + "日");
+	    var day = ["日", "一", "二", "三", "四", "五", "六"];
+	    fdate += " 星期" + day[today.getDay()];
+
+	    // set now datetime
+	    $("#tip_now").html(fdate + "&nbsp;&nbsp;&nbsp;&nbsp;");
+
+	    // set user name
+	    $("#uname").html($.Cookie("uname"));
+
+	    // logout 
+	    $("#link-logout").click(function() {
+	    	vp.page.main._logout();
+	    });
+
+	},
+	
+	_initToolbar: function() {
+	    // info reminder
+	    $("#btn_reminder").click(function() {
+	    	if (vp.v.isConsoleOpen) {
+	    		$("#console").dialog("close");
+	    	} else {
+	    		$("#console").dialog("open");
+	    	}
+	    	vp.v.isConsoleOpen = !vp.v.isConsoleOpen;
+	    });
+	    
+	    // button show current position
+	    $("#btn_whereisme").click(function() {
+	        vp.page.single_track.track({
+	            tid: vp.v.cur_terminal.terminal_serial_no,
+	            tname: vp.v.cur_terminal.terminal_name
+	        });
+	    });
+	    
+	    // start track
+	    $("#btn_start_track").click(function() {
+	    	vp.page.tracker_manager.startTrack({
+	    		tid: vp.v.cur_terminal.terminal_serial_no,
+	    		name: vp.v.cur_terminal.terminal_name
+	    	});
+	    });
+	    
+	    // stop track
+	    $("#btn_stop_track").click(function() {
+	    	vp.page.tracker_manager.stopTrack({
+	    		tid: vp.v.cur_terminal.terminal_serial_no
+	    	});
+	    });
+
+	    // clear track trace
+	    $("#btn_clear_track").click(function() {
+            vp.page.tracker_manager.clearTrace({
+                tid: vp.v.cur_terminal.terminal_serial_no
+            });
+        });
+	    
+	    
+	    // PROTECTED ON
+	    $("#btn_protected").click(function() {
+	        if (vp.v.cur_terminal.status.status == lbs.consts.codemap.status.PT) {
+	            vp.v.log.warn("终端已设防！");
+	            return;
+	        }
+	        vp.page.ptsts.set(lbs.consts.codemap.status.PT);
+	    });
+	    // PROTECTED OFF
+	    $("#btn_unprotected").click(function() {
+	        if (vp.v.cur_terminal.status.status == lbs.consts.codemap.status.UNPT) {
+                vp.v.log.warn("终端已设置为未设防！");
+                return;
+            }
+	        vp.page.ptsts.set(lbs.consts.codemap.status.UNPT);
+        });
+	    
+	    
+	    // modify password
+	    $("#btn_modify_pwd").click(function() {
+	        vp.page.main._modifyPwd();
+	    });
+	    // modify terminalName
+	    $("#btn_modify_name").click(function() {
+	        vp.page.main._modifyName();
+	    });
+	},
+	
+	_modifyName : function() {
+
+		// reset
+	    $("#i_new_name").val("");
+	    $("#n_p_msg").html("");
+	    
+	    $("#panel_modify_name").dialog({
+            autoOpen: true,
+            modal: true,
+            resizable: false,
+            buttons: {
+                "确定" : function () {
+                    vp.page.main._doModifyName($(this));
+                },
+                "取消": function() {
+                    $(this).dialog("close");
+                }
+            }
+        }).show();
+	},
+
+	_doModifyName: function(dialog) {
+	    var newName = lbs.common.trim($("#i_new_name").val());
+	    if (lbs.common.isTrimEmpty(newName)) {
+	        vp.v.log.warn("请输入新昵称！");
+            return;
+	    }
+	    
+	    var reg = /^[\u4e00-\u9fa5_a-zA-Z0-9]+$/;
+	    if (!reg.test(newName)) {
+	    	vp.v.log.warn("昵称格式不正确！（只能中文、英文、数字，不包含特殊字符空格等！）");
+	    	return;
+	    }
+
+	    var cb = function(text) {
+	        vp.v.log.info("昵称修改成功！下次可以用新昵称登录！");
+	        var sMsgHtml = '<span style="color: green"><i class="icon-ok"></i> 昵称修改成功！</span>';
+	        $("#n_p_msg").html(sMsgHtml);
+	        setTimeout(function() {
+	            dialog.dialog("close");
+	        }, 1500);
+	    };
+
+	    var params = {
+	        terminalName : newName,
+	    };
+
+	    // execute modify name
+        lbs.common.ajax("portal/modify_nickname.shtm", params, cb);
+        cb = null;
+        params = null;
+	},
+	
+	_modifyPwd : function() {
+	    // reset
+	    $("#i_old_pwd,#i_new_pwd,#i_new_pwd_again").val("");
+	    $("#m_p_msg").html("");
+
+	    $("#panel_modify_pwd").dialog({
+            autoOpen: true,
+            modal: true,
+            resizable: false,
+            buttons: {
+                "确定" : function () {
+                    vp.page.main._doModifyPwd($(this));
+                },
+                "取消": function() {
+                    $(this).dialog("close");
+                }
+            }
+        }).show();
+	},
+
+	_doModifyPwd: function(dialog) {
+	    var oldPwd = lbs.common.trim($("#i_old_pwd").val());
+	    var newPwd = lbs.common.trim($("#i_new_pwd").val());
+	    var newPwd2 = lbs.common.trim($("#i_new_pwd_again").val());
+	    if (lbs.common.isTrimEmpty(oldPwd)) {
+	        vp.v.log.warn("请输入旧密码！");
+	        return;
+	    }
+
+	    if (lbs.common.isTrimEmpty(newPwd) || lbs.common.isTrimEmpty(newPwd2)) {
+	        vp.v.log.warn("新密码不能为空！");
+            return;
+	    }
+	    
+	    if (newPwd != newPwd2) {
+	        vp.v.log.warn("新密码两次输入不一致！");
+	        return;
+	    }
+
+	    var cb = function(text) {
+	        vp.v.log.info("密码修改成功！下次登录请用新密码！");
+	        var sMsgHtml = '<span style="color: green"><i class="icon-ok"></i> 密码修改成功！</span>';
+	        $("#m_p_msg").html(sMsgHtml);
+	        setTimeout(function() {
+	            dialog.dialog("close");
+	        }, 1500);
+	    };
+
+	    var params = {
+	        oldPwd : oldPwd,
+	        newPwd : newPwd,
+	        newPwd2 : newPwd2
+	    };
+
+	    // execute modify password
+        lbs.common.ajax("portal/modify_tmn_pwd.shtm", params, cb);
+        cb = null;
+        params = null;
+	},
+
+	afterInit: function () {
+		// add a clear button to the console panel
+		var clearHtml = "<span id='btn_console_clear' title='清空日志' class='ui-dialog-title' style='color: red;font-size:14px;cursor:pointer;'>&nbsp;&nbsp;<i class='icon-trash'></i>&nbsp;&nbsp;</span>";
+		$("#console").prev("div").children("span").after(clearHtml);
+		$("#btn_console_clear").click(function() {
+			vp.v.log.clear();
+		});
+
+		// register resizer
+		$(window).resize(function() {
+			vp.page.main._resize();
+		});
+
+		setTimeout(function() {
+			vp.page.main._loadTerminalInfo();
+		}, 1000);
+	},
+
+	_logout: function() {
+		/*$("#panel_logout").dialog({
+		    autoOpen: true,
+		    modal: true,
+		    resizable: false,
+		    buttons: {
+		        "确定" : function () {
+		        	var me = $(this);
+		        	lbs.common.ajax("portal/logout.shtm", {}, function(text) {
+						top.location.href = vp.v.ctx_path + $.parseJSON(text).forward;
+						me.dialog("close");
+					});
+		        },
+		        "取消": function() {
+		        	$(this).dialog("close");
+		        }
+		    }
+		}).show();*/
+
+	    // logout directly
+	    lbs.common.ajax("portal/logout.shtm", {}, function(text) {
+            top.location.href = vp.v.ctx_path + $.parseJSON(text).forward;
+        });
+	},
+
+	_loadTerminalInfo : function() {
+		var _callback = function(text) {
+			var json = $.parseJSON(text);
+			vp.v.cur_terminal = json.terminal;
+			
+			// configure change
+			vp.v.cur_terminal.statusChanged = function(statusObj) {
+			    if (statusObj.status) {
+			        $("#c_status").html(lbs.consts.codemap.status[statusObj.status]);
+			        vp.v.cur_terminal.status.status = statusObj.status;
+			    }
+			    
+			    if (statusObj.trace) {
+			        $("#c_track_status").html(lbs.consts.codemap.track[statusObj.trace]);
+			    }
+			    
+			    if (statusObj.hbTime) {
+			        $("#c_t_hbtime").html(statusObj.hbTime);
+			    }
+			    
+			};
+			
+			// position changed
+			vp.v.cur_terminal.posChanged = function(pos, showMarker) {
+				var _MK_PREFIX = "mk";
+				
+			    if (!lbs.common.isEmpty(pos.lng)) {
+			        $("#c_t_p_lng").html(pos.lng.substring(0, 8));
+			    } else {
+			        $("#c_t_p_lng").html("无数据");
+			    }
+			    
+			    if (!lbs.common.isEmpty(pos.lat)) {
+			        $("#c_t_p_lat").html(pos.lat.substring(0, 7));
+			    } else {
+			        $("#c_t_p_lat").html("无数据");
+			    }
+			    
+			    if (!lbs.common.isEmpty(pos.speed)) {
+			        $("#c_t_p_speed").html(parseFloat(pos.speed) + '&nbsp;km/h');
+			    } else {
+			        $("#c_t_p_speed").html("无数据");
+			    }
+			    
+			    if (!lbs.common.isEmpty(pos.ggv)) {
+			        $("#c_t_p_gps").html(pos.ggv.substring(0, 1));
+			    } else {
+			        $("#c_t_p_gps").html("无数据");
+			    }
+			    
+			    if (!lbs.common.isEmpty(pos.loc_status)) {
+                    $("#c_t_p_locmode").html(lbs.consts.codemap.locmode.getDisp(pos.loc_status));
+                } else {
+                    $("#c_t_p_locmode").html("无数据");
+                }
+			    
+			    if (!lbs.common.isEmpty(pos.status)) {
+                    $("#c_t_p_status").html(lbs.consts.codemap.status[pos.status]);
+                } else {
+                    $("#c_t_p_status").html("无数据");
+                }
+			    
+                if (!lbs.common.isEmpty(pos.ggv)) {
+                    var vtg = pos.ggv.substring(2, 3);
+                    $("#c_t_p_vtg").html(lbs.CC.VTG[vtg]);
+                } else {
+                    $("#c_t_p_vtg").html("无数据");
+                }
+			    
+			    if (!lbs.common.isEmpty(pos.loc_time)) {
+			        $("#c_t_p_time").html(pos.loc_time);
+			    } else {
+			        $("#c_t_p_time").html("无数据");
+			    }
+			    
+			    // show location desc
+			    if (!lbs.common.isEmpty(pos.lng)) {
+			        vp.m.getLocation(pos.lng, pos.lat, function(desc) {
+			            $("#c_t_p_desc").html(desc);
+			        });
+			    } else {
+			        $("#c_t_p_desc").html("未知区域");
+			    }
+
+			    if (showMarker && !lbs.common.isEmpty(pos.lng)) {
+			        var params = {
+		                mkid: _MK_PREFIX + vp.v.cur_terminal.terminal_serial_no,
+		                name: vp.v.cur_terminal.terminal_name,
+		                imgUrl: lbs.consts.PIMG.SINGLE,
+		                x: pos.lng,
+		                y: pos.lat,
+		                center: true
+			        };
+
+			        // show on map
+			        vp.m.showLoc(params);
+			    };
+			};
+			
+			
+			// draw table
+			vp.page.main._drawTable(vp.v.cur_terminal);
+
+			// reset height
+			vp.v._g_TMI_h = vp.v._g_TMI_h;
+			$("#panel_terminal_info").animate({width: vp.v._g_TMI_w, height: vp.v._g_TMI_h}, "fast", "swing");
+			$("#panel_terminal_info").children("span").hide();
+			$("#panel_terminal_info").children("div").show();
+
+
+		};
+
+		// do load
+		lbs.common.ajax("portal/load_terminals.shtm", {
+		    terminalSerialNo: vp.v.login_terminal_serial_no
+		}, _callback);
+		_callback = null;
+	},
+
+	_drawTable: function(obj) {
+	    $("#c_terminal_serial_no").html(obj.terminal_serial_no);
+	    $("#c_terminal_name").html(obj.terminal_name);
+		$("#c_op_no").html(obj.terminal_op_no);
+		$("#c_status").html(lbs.consts.codemap.status[obj.status.status]);
+		$("#c_track_status").html(lbs.consts.codemap.track[lbs.consts.codemap.track.OFF]);
+		$("#c_t_hbtime").html(obj.status.hbTime);
+		
+		// set pos
+		vp.v.cur_terminal.posChanged(obj.pos, true);
+
+	},
+
+	_resize : function() {
+		var mapW = $(window).innerWidth() - 1 * 2;
+		var mapH = $(window).innerHeight() - $("#panel_header").height() - 2 * 2;
+		if (mapW < 400 || mapH < 200) {
+			return;
+		}
+
+		// resize map
+		vp.m.resize(mapW, mapH);
+		
+		// position block
+		$("#panel_terminal_info").css({"margin-left": (mapW - vp.v._g_TMI_w - 25) + "px"});
+		
+		// set console
+		$("#console").dialog({
+			position : {my: "left top", at: "right bottom", of: window}
+		});
+	}
+};
+
+

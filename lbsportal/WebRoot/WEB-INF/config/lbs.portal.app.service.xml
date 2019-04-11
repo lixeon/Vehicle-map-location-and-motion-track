@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:p="http://www.springframework.org/schema/p" 
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans 
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+
+	<!-- Client APP Server -->
+	<bean class="com.app.lbs.portal.app.controller.ClientAppServer">
+		<property name="name" value="${app.s.servlet.name}"/>
+		<property name="mapping" value="${app.s.servlet.mapping}"/>
+	</bean>
+
+	<!-- AuthToken Service -->
+    <bean id="app_AuthTokenService" class="com.app.lbs.portal.app.service.impl.AuthTokenServiceImpl" init-method="initialize" >
+    </bean>
+
+	<!-- Abstract Client App Service -->
+    <bean id="app_AbstractClientAppService" class="com.app.lbs.portal.app.service.AbstractClientAppService" abstract="true" >
+    	<property name="commonDao" ref="common_commonDaoEx"/>
+    	<property name="authTokenService" ref="app_AuthTokenService"/>
+    </bean>
+
+	<!-- Mobile AuthCode Service -->
+	<bean id="app_A0000Service" class="com.app.lbs.portal.app.service.impl.A0000ServiceImpl" parent="app_AbstractClientAppService"
+	   init-method="initialize" destroy-method="destroy">
+    </bean>
+    
+	<!-- Verify AuthCode Service -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0010ServiceImpl" parent="app_AbstractClientAppService">
+		<property name="authCodeManager" ref="app_A0000Service"/>
+    </bean>
+
+	<!-- User Register Service -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0100ServiceImpl" parent="app_AbstractClientAppService">
+		<property name="authCodeManager" ref="app_A0000Service"/>
+    </bean>
+	
+	<!-- Modify User's Info -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0110ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+
+	<!-- Get User's Info -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0120ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+
+	<!-- User Login Service -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0130ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+    
+	<!-- Update User's Password (Login User) -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0140ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+    
+	<!-- Update User's Password (AuthCode User) -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0150ServiceImpl" parent="app_AbstractClientAppService">
+		<property name="authCodeManager" ref="app_A0000Service"/>
+    </bean>
+
+	<!-- Get User's Terminal Service -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0200ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+
+	<!-- Get terminal's running info -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0210ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+    
+	<!-- Get terminal's fences info -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0220ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+
+	<!-- Get Latest Location Trace -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0230ServiceImpl" parent="app_AbstractClientAppService">
+		<property name="terminalInfoService" ref="common_pub_TerminalInfoService" />
+    </bean>
+
+	<!-- Get Terminal's History Locations -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0240ServiceImpl" parent="app_AbstractClientAppService">
+		<property name="terminalInfoService" ref="common_pub_TerminalInfoService" />
+    </bean>
+    
+	<!-- Restart Terminal -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0250ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+
+	<!-- Query Terminal Configurations -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0260ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+    
+	<!-- Set Terminal Configuration -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0270ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+    
+	<!-- User's feedback -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0900ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+
+	<!-- Check app's Software -->
+	<bean class="com.app.lbs.portal.app.service.impl.A0910ServiceImpl" parent="app_AbstractClientAppService">
+    </bean>
+    
+    
+</beans>

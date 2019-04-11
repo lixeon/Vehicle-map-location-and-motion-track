@@ -1,0 +1,11 @@
+﻿[
+	{ "id": "ONLINEINTERVAL", "text": "终端在线阈值" },
+    { "id": "ALARMSHOWINTERVAL", "text": "终端报警阈值" },
+    { "id": "ISSHOWOFFLINETARGET", "text": "是否显示离线终端" },
+    { "id": "ISSHOWTARGETNAME", "text": "是否显示终端的名称" },
+	{ "id": "SHOWWEIJINUMBER", "text": "尾迹查询中轨迹点个数" },
+	{ "id": "GUIJIRELAYTIME", "text": "轨迹查询开始结束时间间隔" },
+	{ "id": "GUIJIDELERRPOSITION", "text": "轨迹查询是否屏蔽异常定位" },
+	{ "id": "GETPOSINTERVAL", "text": "地图刷新时间间隔" },
+	{ "id": "ISSHOWTAG", "text": "是否显示标签" }
+]

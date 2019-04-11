@@ -1,0 +1,267 @@
+/**
+ * Baidu map
+ */
+(function() {
+    
+    // constant
+    var _C_DISP_LEVEL = 13;
+    
+    var _MAP_EVENT = {
+    	"dragend" : "dragend",
+    	"zoomend" : "zoomend",
+    	"moveend" : "moveend"
+    };
+
+    // map id
+    var _map_id = "map_canvas";
+    var _map_toolbar_id = "panel_map_toolbar";
+
+    // map object
+    var _map_obj = null;
+    var _map_ruler = null;
+    
+    // map overlays
+    var _map_overlay_holder = {};
+    
+    var _converter = null;
+
+    
+    /**
+     * Map init callback
+     */
+    var _mapInitedCallback = function() {
+    	// TODO
+    };
+
+    /**
+     * initialize
+     */
+    function init(opts) {
+    	
+        // map panel id, map toolbar panel id
+        _map_id = opts.panelId;
+        _map_toolbar_id = opts.toolbarId;
+
+        var mapW = $(window).width() - 1 * 2;
+        var mapH = $(window).height() - $("#panel_header").height() - 2 * 2;
+
+        // reset map view size
+        $("#" + _map_id).css({"height": mapH + "px", "width": mapW + "px"});
+        $("#" + _map_toolbar_id).css({"margin-left": (mapW * 0.618) - 40 * 4 + "px"});
+        $("#" + _map_toolbar_id).show();
+        
+        _map_obj = new BMap.Map(_map_id);
+        _map_obj.centerAndZoom(new BMap.Point(parseFloat(vp.v.city_clng), parseFloat(vp.v.city_clat)), opts.zoom || _C_DISP_LEVEL);
+        _map_obj.setMaxZoom(19);
+        _map_obj.addControl(new BMap.NavigationControl());
+        var maptype = new BMap.MapTypeControl({mapTypes: [BMAP_NORMAL_MAP,BMAP_HYBRID_MAP]});
+        maptype.setAnchor(BMAP_ANCHOR_TOP_LEFT);
+        maptype.setOffset(new BMap.Size(80, 15));
+        _map_obj.addControl(maptype);
+        _map_obj.enableScrollWheelZoom();
+        _map_obj.enableContinuousZoom();
+        _map_obj.enableInertialDragging();
+        
+        // distance ruler
+        _map_ruler = new BMapLib.DistanceTool(_map_obj);
+        // measure distance
+        $("#btn_map_measuredistance").click(function() {
+            _map_ruler.open();
+        });
+
+    }
+    
+    
+    /**
+     * add Marker
+     * 
+     * @param opts {mkid:string, imgUrl:string, name:string, x:number, y:number, center:boolean, inView: boolean}
+     */
+    function addMarker(opts) {
+
+        // remove old marker
+        removeMarker(opts.mkid);
+        
+        var bdp = vp.m.adjustXY(opts.x, opts.y);
+        var pos = new BMap.Point(bdp.x, bdp.y);
+        
+        var marker = new BMap.Marker(pos, {
+        	title : opts.name,
+        	icon : (opts.imgUrl) ? new BMap.Icon(opts.imgUrl, new BMap.Size(40, 40), {
+        		imageOffset : new BMap.Size(10, 10)
+        	}) : null
+        });
+        
+        var lbContent = opts.name;
+        if (opts.label) {
+        	lbContent = opts.label.content;
+        }
+        marker.setLabel(new BMap.Label(lbContent, {
+        	position : pos,
+        	offset : new BMap.Size(25, 25)
+        }));
+
+        if (opts.center) {
+            _map_obj.panTo(pos);
+        } else if (opts.inView) {
+            var bounds = _map_obj.getBounds();
+            if (!bounds.containsPoint(pos)) {
+                _map_obj.panTo(pos);
+            }
+        }
+        
+        if (opts.infoWin) {
+        	var infowindow = new BMap.InfoWindow(opts.infoWin.content, {
+        		title: opts.infoWin.title
+        	});
+        	marker.addEventListener("click", function() {
+        		this.openInfoWindow(infowindow);
+        	});
+        }
+        
+        // add marker
+        _map_obj.addOverlay(marker);
+
+        // hold
+        _map_overlay_holder['#MM' + opts.mkid] = marker;
+    }
+    
+
+    /**
+     * remove marker
+     */
+    function removeMarker(id) {
+        var ol = _map_overlay_holder["#MM" + id];
+        if (ol != null) {
+        	_map_overlay_holder['#MM' + id] = null;
+            _map_obj.removeOverlay(ol);
+        }
+    }
+    
+    
+    /**
+     * Add Line
+     *
+     * @param opts {lid:string, xs:array, ys:array, color:string}
+     */
+    function addLine(opts) {
+        
+        var points = [];
+        var bdp = null;
+        for (var i = 0; i < opts.xs.length; i++) {
+        	bdp = vp.m.adjustXY(parseFloat(opts.xs[i]), parseFloat(opts.ys[i]));
+            points.push(new BMap.Point(bdp.x, bdp.y));
+        }
+
+        var line = new BMap.Polyline(points, {
+            strokeColor: opts.color || "#0000ff",
+            strokeOpacity: 0.75,
+            strokeWeight: 4
+        });
+
+        // add line
+        _map_obj.addOverlay(line);
+        
+        // hold
+        _map_overlay_holder['#ML' + opts.lid] = line;
+    }
+
+
+    /**
+     * remove line
+     *
+     * @param id line id
+     */
+    function removeLine(id) {
+        var ol = _map_overlay_holder["#ML" + id];
+        if (ol != null) {
+        	_map_overlay_holder['#ML' + id] = null;
+        	_map_obj.removeOverlay(ol);
+        }
+    }
+
+
+    /**
+     * resize
+     */
+    function resize(mapW, mapH) {
+        // reset map view size
+        $("#" + _map_id).css({"height": mapH + "px", "width": mapW + "px"});
+        $("#" + _map_toolbar_id).css({"margin-left": (mapW * 0.618) - 40 * 4 + "px"});
+    }
+    
+    
+    /**
+     * Map configuration
+     */
+    function config(key, value) {
+        if (key == 'zoom') {
+            if (value == undefined) {
+                return _map_obj.getZoom();
+            } else {
+                _map_obj.setZoom(value);
+            }
+        }
+    }
+
+
+    /**
+     * get map size
+     */
+    function getMapBounds() {
+    	var bounds = _map_obj.getBounds();
+    	var myBounds = {
+    		swx : bounds.getSouthWest().lng,
+    		swy : bounds.getSouthWest().lat,
+    		nex : bounds.getNorthEast().lng,
+    		ney : bounds.getNorthEast().lat
+    	};
+    	return myBounds;
+    }
+
+    
+    /**
+     * clear alll
+     */
+    function clearAll() {
+    	for (var k in _map_overlay_holder) {
+    		if (_map_overlay_holder[k] != null) {
+    			_map_obj.removeOverlay(_map_overlay_holder[k]);
+    			_map_overlay_holder[k] = null;
+    		}
+    	}
+    }
+    
+    
+    /**
+     * register event (Map)
+     */
+    function registerEvent(event, handler) {
+    	var myEvent = _MAP_EVENT[event];
+    	if (myEvent != null) {
+    		_map_obj.addEventListener(event, handler);
+    	}
+    }
+    
+    /**
+     * unregister event (Map)
+     */
+    function unregisterEvent(event, handler) {
+    	// _map_obj.removeEventListener(event, handler);
+    }
+    
+    
+    // export
+    vp.m.init = init;
+    vp.m.resize = resize;
+    vp.m.showLoc = addMarker;
+    vp.m.removeMark = removeMarker;
+    vp.m.drawLine = addLine;
+    vp.m.removeLine = removeLine;
+    vp.m.mapConfig = config;
+    vp.m.getMapBounds = getMapBounds;
+    vp.m.clearAll = clearAll;
+    vp.m.registerEvent = registerEvent;
+    vp.m.unregisterEvent = unregisterEvent;
+
+})();
